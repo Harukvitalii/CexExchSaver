@@ -7,4 +7,4 @@ import { ConfigService } from '@nestjs/config';
   controllers: [],
   providers: [SaverService, ConfigService],
 })
-export class DilisenseModule {}
+export class CexSaverModule {}
