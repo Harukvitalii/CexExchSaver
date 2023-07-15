@@ -6,7 +6,7 @@ import * as ccxt from 'ccxt';
 //config service
 
 @Injectable()
-export class SaverService {
+export class ExchangeService {
   markets: string[]
   
   constructor(private configService: ConfigService) {

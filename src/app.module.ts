@@ -10,6 +10,11 @@ import { DatabaseService } from './database/database.service';
 import { DatabaseController } from './database/database.controller';
 import { DatabaseModule } from './database/database.module';
 import { LoggingService } from './logger/logging.service';
+import { LoggingModule } from './logger/logging.module';
+import { ScheduleModule } from '@nestjs/schedule';
+import { TaskController } from './deamons/trans.deamon.controller';
+import { BackgroundService } from './deamons/trans.deamon.provider';
+import { ExchangeService } from './cex/exchnage.service';
 
 @Module({
   imports: [
@@ -31,8 +36,17 @@ import { LoggingService } from './logger/logging.service';
     }),
     CexSaverModule,
     DatabaseModule,
+    LoggingModule,
+    ScheduleModule.forRoot(),
   ],
-  controllers: [AppController, DatabaseController],
-  providers: [AppService, ConfigService, DatabaseService, LoggingService],
+  controllers: [AppController, DatabaseController, TaskController],
+  providers: [
+    AppService,
+    ConfigService,
+    DatabaseService,
+    LoggingService,
+    BackgroundService,
+    ExchangeService,
+  ],
 })
 export class AppModule {}

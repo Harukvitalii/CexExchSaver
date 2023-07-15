@@ -1,7 +1,7 @@
 import { Column, DataType, Model, Table } from 'sequelize-typescript';
 
 @Table
-export class Record extends Model<Record> {
+export class Record extends Model {
   @Column({
     allowNull: false,
     unique: true,
