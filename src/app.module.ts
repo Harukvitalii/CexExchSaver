@@ -15,6 +15,9 @@ import { ScheduleModule } from '@nestjs/schedule';
 import { TaskController } from './deamons/trans.deamon.controller';
 import { BackgroundService } from './deamons/trans.deamon.provider';
 import { ExchangeService } from './cex/exchnage.service';
+import { SaverService } from './cex/api.service';
+import { CexController } from './cex/cex.controller';
+import { MyConfigModule } from './configuration/config.module';
 
 @Module({
   imports: [
@@ -37,9 +40,15 @@ import { ExchangeService } from './cex/exchnage.service';
     CexSaverModule,
     DatabaseModule,
     LoggingModule,
+    MyConfigModule,
     ScheduleModule.forRoot(),
   ],
-  controllers: [AppController, DatabaseController, TaskController],
+  controllers: [
+    AppController,
+    DatabaseController,
+    TaskController,
+    CexController,
+  ],
   providers: [
     AppService,
     ConfigService,
@@ -47,6 +56,7 @@ import { ExchangeService } from './cex/exchnage.service';
     LoggingService,
     BackgroundService,
     ExchangeService,
+    SaverService,
   ],
 })
 export class AppModule {}

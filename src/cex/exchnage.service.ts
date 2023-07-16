@@ -3,27 +3,22 @@ import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 // import axios from 'axios';
 import * as ccxt from 'ccxt';
+import { SaverService } from './api.service';
 //config service
 
 @Injectable()
 export class ExchangeService {
   markets: string[]
   
-  constructor(private configService: ConfigService) {
+  constructor(
+    private configService: ConfigService,
+    private cctxBulk: SaverService) {
     this.markets = this.configService.get("ALLOWED_PAIRS")
   }
 
-  async getExcanges(): Promise<any> {
-    const exchanges = await Promise.all(
-      this.markets.map(async (id: string): Promise<ccxt.Exchange> => {
-        const CCXT = ccxt as any;
-        const exchange = new CCXT[id]({
-          enableRateLimit: true,
-        }) as ccxt.Exchange;
-      const exchangeExtended = exchange.extend({ "name": id, "class": exchange }) as ccxt.Exchange;
-      return exchangeExtended;
-  }));
-    console.log(exchanges)
+  async loadWS(): Promise<any> {
+    const exchanges = await this.cctxBulk.getExchanges()
+    console.log('exchagnes', exchanges)
     return '';
 
   
