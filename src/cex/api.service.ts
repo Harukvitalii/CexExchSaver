@@ -3,11 +3,12 @@ import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 // import axios from 'axios';
 import * as ccxt from 'ccxt';
+import { RedisCacheService } from 'src/redis/redis.service';
 
 //config service
 
 interface cexPairs {
-  [name: string]: Record<string, Record<string, number>>; // Allows any string key and values of type Record<string, Record<string, number>>
+  [name: string]: Record<string, Record<string, number>>; 
 }
 
 
@@ -17,7 +18,10 @@ export class SaverService {
   exchanges: string[]
   cex_pairs: cexPairs
   
-  constructor(private configService: ConfigService) {
+  constructor(
+    private configService: ConfigService,
+    private redis: RedisCacheService,
+    ) {
     this.pairs     = JSON.parse(this.configService.get("ALLOWED_PAIRS"))
     this.exchanges = JSON.parse(this.configService.get("ALLOWED_EXCHANGES_WS"))
     this.cex_pairs = {}
@@ -91,8 +95,8 @@ export class SaverService {
     const bid = orderbook['bids'][0][0]
     const ask = orderbook['asks'][0][0]
     this.save_pair_info(exchange.id, symbol, ask, bid)
-    console.log(new Date (), this.cex_pairs)
-
+    // console.log(new Date (), this.cex_pairs)
+    
     //save
     //
   }
@@ -122,5 +126,8 @@ export class SaverService {
       }
       this.cex_pairs[name][symbol1][symbol0] = 1 / price_bid;
     }
+  // console.log(this.cex_pairs)
+  const val = JSON.stringify(this.cex_pairs)
+  this.redis.set('exchnage-prices', val)
   }
 }

@@ -13,13 +13,16 @@ export class RedisCacheService {
   }
 
   async set(key: string, value: any) {
-    return await this.redis.set(key, value, 'EX', 0);
+    return await this.redis.set(key, value, 'EX', 100000);
   }
   async get(key: string) {
     return await this.redis.get(key);
   }
   async hset(hashName: string, key: string, value: any) {
     await this.redis.hset(hashName, key, value);
+  }
+  async hmset(hashName: string, value: (string | number | Buffer)[]) {
+    await this.redis.hmset(hashName, value);
   }
 
   async hgetall(hashName) {
