@@ -10,10 +10,19 @@ bootstrap();
 
 
 // exeptions in websocket connection (disconnect, lost peer etc)
-// optimizing redis storage
 // optimizing comparizon
 // database save data
 // adding timestemp to prices
 // configure logging
 // write logging
+//
+
+// commissions for price
+
+// в моменте різниця в відсотках
+// -------------основа WHITEBIT --- KRAKEN, BITSTAMP
+// USDT > EUR ціна    %                   %
+// EUR > USDT ціна    %                   %
+// кожні 30 секунд
+
 //

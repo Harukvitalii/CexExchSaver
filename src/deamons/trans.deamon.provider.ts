@@ -44,7 +44,7 @@ export class BackgroundService {
     console.log(new Date());
     const prices = await this.redis.get('exchnage-prices');
     try {
-      console.log('prices whitebit', JSON.parse(prices));
+      console.log('prices Exchanges', JSON.parse(prices));
     } catch (e) {
       console.log(e);
     }
