@@ -13,6 +13,8 @@ import { SaverService } from './cex/api.service';
 import { CexController } from './cex/cex.controller';
 import { MyConfigModule } from './configuration/config.module';
 import { EventEmitterModule } from '@nestjs/event-emitter';
+import { RedisCacheModule } from './redis/redis.module';
+import { RedisCacheService } from './redis/redis.service';
 
 @Module({
   imports: [
@@ -35,10 +37,17 @@ import { EventEmitterModule } from '@nestjs/event-emitter';
     CexSaverModule,
     DatabaseModule,
     MyConfigModule,
+    RedisCacheModule,
     ScheduleModule.forRoot(),
     EventEmitterModule.forRoot(),
   ],
   controllers: [AppController, TaskController, CexController],
-  providers: [AppService, ConfigService, BackgroundService, SaverService],
+  providers: [
+    AppService,
+    ConfigService,
+    BackgroundService,
+    SaverService,
+    RedisCacheService,
+  ],
 })
 export class AppModule {}
