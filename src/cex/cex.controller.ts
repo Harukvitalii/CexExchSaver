@@ -1,6 +1,5 @@
 import { Controller, Get } from '@nestjs/common';
 import { SaverService } from './api.service';
-import { ExchangeService } from './exchnage.service';
 import { ConfigService } from '@nestjs/config';
 import * as ccxt from 'ccxt';
 

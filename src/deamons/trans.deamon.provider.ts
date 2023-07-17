@@ -1,20 +1,33 @@
 import { Injectable } from '@nestjs/common';
-import { Cron, CronExpression } from '@nestjs/schedule';
-import { ExchangeService } from 'src/cex/exchnage.service';
-import { DatabaseService } from 'src/database/database.service';
-import { LoggingService } from 'src/logger/logging.service';
+import { EventEmitter2, OnEvent } from '@nestjs/event-emitter';
+import { SaverService } from 'src/cex/api.service';
+import * as ccxt from 'ccxt';
 
 @Injectable()
 export class BackgroundService {
   constructor(
-    private readonly db: DatabaseService,
-    private readonly logger: LoggingService,
-    private readonly exchangeService: ExchangeService,
+    private readonly eventEmitter: EventEmitter2,
+    private readonly cctxBulk: SaverService,
   ) {}
-  @Cron('0 */15 * * * *')
-  //   @Cron(CronExpression.EVERY_10_SECONDS)
-  async handleCron() {
-    console.log('working');
-    // await this.exchangeService.loadWS();
+  async onApplicationBootstrap() {
+    console.log('start events');
+    // this.eventEmitter.emit('start_exchange_motinoring');
+  }
+
+  @OnEvent('start_exchange_motinoring')
+  async myFunction() {
+    const exchanges = await this.cctxBulk.getExchanges();
+    await Promise.all(
+      Object.values(exchanges).map(async (cex: ccxt.Exchange) => {
+        try {
+          console.log(`Starting WebSocket listener for ${cex.id}`);
+          await this.cctxBulk.startOrderBookListener(cex);
+        } catch (error) {
+          console.error(`Error creating exchange ${cex.id}:`, error);
+          console.log('Available exchanges:', ccxt.exchanges);
+          throw error;
+        }
+      }),
+    );
   }
 }

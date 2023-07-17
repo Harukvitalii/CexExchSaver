@@ -1,12 +1,11 @@
 import { Module } from '@nestjs/common';
 import { DatabaseService } from './database.service';
 import { SequelizeModule } from '@nestjs/sequelize';
-import { Exchange } from './exchange.model';
 import { LoggingModule } from 'src/logger/logging.module';
-import { Record } from './record.model';
+import { priceRecord } from './priceRecord.model';
 
 @Module({
-  imports: [SequelizeModule.forFeature([Exchange, Record]), LoggingModule],
+  imports: [SequelizeModule.forFeature([priceRecord]), LoggingModule],
   providers: [DatabaseService],
   exports: [DatabaseService],
 })

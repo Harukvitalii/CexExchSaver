@@ -7,14 +7,13 @@ export class LoggingService {
   private logger: winston.Logger;
 
   constructor() {
-    // const transport = new DailyRotateFile({
-    //   filename: './logs/BackTrustee-%DATE%.log',
-    //   datePattern: 'YYYY-MM-DD',
+    // const transport: DailyRotateFile = new DailyRotateFile({
+    //   filename: 'application-%DATE%.log',
+    //   datePattern: 'YYYY-MM-DD-HH',
     //   zippedArchive: true,
     //   maxSize: '20m',
     //   maxFiles: '14d',
     // });
-
     // this.logger = winston.createLogger({
     //   transports: [transport],
     // });

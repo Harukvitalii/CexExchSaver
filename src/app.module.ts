@@ -4,20 +4,15 @@ import { AppService } from './app.service';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { CexSaverModule } from './cex/api.module';
 import { SequelizeModule } from '@nestjs/sequelize';
-import { Record } from './database/record.model';
-import { Exchange } from './database/exchange.model';
-import { DatabaseService } from './database/database.service';
-import { DatabaseController } from './database/database.controller';
+import { priceRecord } from './database/priceRecord.model';
 import { DatabaseModule } from './database/database.module';
-import { LoggingService } from './logger/logging.service';
-import { LoggingModule } from './logger/logging.module';
 import { ScheduleModule } from '@nestjs/schedule';
 import { TaskController } from './deamons/trans.deamon.controller';
 import { BackgroundService } from './deamons/trans.deamon.provider';
-import { ExchangeService } from './cex/exchnage.service';
 import { SaverService } from './cex/api.service';
 import { CexController } from './cex/cex.controller';
 import { MyConfigModule } from './configuration/config.module';
+import { EventEmitterModule } from '@nestjs/event-emitter';
 
 @Module({
   imports: [
@@ -31,7 +26,7 @@ import { MyConfigModule } from './configuration/config.module';
         username: configService.get<string>('pgusername'),
         password: configService.get<string>('pgpassword'),
         database: configService.get<string>('pgdatabase'),
-        models: [Record, Exchange],
+        models: [priceRecord],
         dialectOptions: {
           pool: false,
         },
@@ -39,24 +34,11 @@ import { MyConfigModule } from './configuration/config.module';
     }),
     CexSaverModule,
     DatabaseModule,
-    LoggingModule,
     MyConfigModule,
     ScheduleModule.forRoot(),
+    EventEmitterModule.forRoot(),
   ],
-  controllers: [
-    AppController,
-    DatabaseController,
-    TaskController,
-    CexController,
-  ],
-  providers: [
-    AppService,
-    ConfigService,
-    DatabaseService,
-    LoggingService,
-    BackgroundService,
-    ExchangeService,
-    SaverService,
-  ],
+  controllers: [AppController, TaskController, CexController],
+  providers: [AppService, ConfigService, BackgroundService, SaverService],
 })
 export class AppModule {}

@@ -3,7 +3,6 @@ import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 // import axios from 'axios';
 import * as ccxt from 'ccxt';
-import AsyncRetry, * as retry from 'async-retry';
 
 //config service
 
@@ -34,19 +33,28 @@ export class SaverService {
           const cex: ccxt.Exchange = new CCXT[id]({
             enableRateLimit: true,
         })
-          retry(async () => {
-            await cex.loadMarkets();
-          }, {
-            retries: 3, // Maximum number of retries
-            minTimeout: 1000, // Minimum delay between retries in milliseconds
-            maxTimeout: 5000, // Maximum delay between retries in milliseconds
-            randomize: true, // Randomize delay between retries
-            onRetry: (error, attempt) => {
+         
+          let retries = 3;
+          let success = false;
+    
+          while (retries > 0 && !success) {
+            try {
+              await cex.loadMarkets();
+              success = true;
+            } catch (error) {
+              retries--;
               console.error(`Error creating exchange ${id}:`, error);
-              console.log(`Retrying ${attempt}/${3}`);
-            },
-          });
-          exchangeInst[id] = cex;
+              console.log(`Retrying ${3 - retries}/${3} in 500 ms...`);
+              await new Promise(resolve => setTimeout(resolve, 500));
+            }
+          }
+    
+          if (success) {
+            exchangeInst[id] = cex;
+          } else {
+            console.error(`Failed to create exchange ${id}: maximum retries exceeded`);
+            console.log('Available exchanges:', ccxt.exchanges);
+          }
       } catch (error) {
           console.error(`Error creating exchange ${id}:`, error);
           console.log('Available exchanges:', ccxt.exchanges);
