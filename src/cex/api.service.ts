@@ -3,6 +3,9 @@ import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 // import axios from 'axios';
 import * as ccxt from 'ccxt';
+import { ExchangeFees } from './cex.interface';
+import { DatabaseService } from 'src/database/database.service';
+import { priceRecord } from 'src/database/priceRecord.model';
 
 //config service
 
@@ -16,12 +19,15 @@ export class SaverService {
   pairs: string[]
   exchanges: string[]
   cex_pairs: cexPairs
+  exchangeFees: ExchangeFees
   
   constructor(
-    private configService: ConfigService,
+    private readonly configService: ConfigService,
+    private readonly db: DatabaseService,
     ) {
-    this.pairs     = JSON.parse(this.configService.get("ALLOWED_PAIRS"))
-    this.exchanges = JSON.parse(this.configService.get("ALLOWED_EXCHANGES_WS"))
+    this.exchanges    = JSON.parse(this.configService.get("ALLOWED_EXCHANGES"))
+    this.pairs        = JSON.parse(this.configService.get("ALLOWED_PAIRS"))
+    this.exchangeFees = JSON.parse(this.configService.get("EXCHANGE_FEES"))
     this.cex_pairs = {}
   }
 
@@ -31,35 +37,16 @@ export class SaverService {
     await Promise.all(
       this.exchanges.map(async (id: string) => {
         try {
-          const CCXT = ccxt.pro as any;
+          const CCXT = ccxt as any;
           const cex: ccxt.Exchange = new CCXT[id]({
             enableRateLimit: true,
         })
          
-          let retries = 3;
-          let success = false;
-    
-          while (retries > 0 && !success) {
-            try {
-              await cex.loadMarkets();
-              success = true;
-            } catch (error) {
-              retries--;
-              console.error(`Error creating exchange ${id}`);
-              console.log(`Retrying ${3 - retries}/${3} in 1500 ms...`);
-              await new Promise(resolve => setTimeout(resolve, 1500));
-            }
-          }
-    
-          if (success) {
-            exchangeInst[id] = cex;
-          } else {
-            console.error(`Failed to create exchange ${id}: maximum retries exceeded`);
-            console.log('Available exchanges:', ccxt.exchanges);
-          }
+        await cex.loadMarkets();
+        console.log(`loaded markets ${cex.id}`)
+        exchangeInst[id] = cex
       } catch (error) {
-          console.error(`Error creating exchange ${id}:`, error);
-          console.log('Available exchanges:', ccxt.exchanges);
+          console.log(`Error creating exchange ${id}:`, error);
           throw error;
       }
   }));
@@ -67,63 +54,103 @@ export class SaverService {
   }
 
 
-  async startChekingPairs(exchange: ccxt.Exchange) { 
+  async startChekingPairs(exchanges: ccxt.Exchange[]) { 
     try { 
-      const pairsToSubscribe = exchange.symbols.filter(symbol => this.pairs.includes(symbol));
-      console.log("symb to subscribe", pairsToSubscribe)
-      await Promise.all(pairsToSubscribe.map(symbol => this.startSymoblListener(exchange, symbol)))
+      const pairsToSubscribeExs = exchanges.map(exchange => exchange.symbols.filter(symbol  => this.pairs.includes(symbol)))
+      const pairsToSub = this.getMatchingPairs(pairsToSubscribeExs)
+      
+      const notIncludedPairs = this.pairs.filter(pair => !pairsToSub.includes(pair));
+      console.log(`pairs to subscribe = ${pairsToSub}, pairs that are not in all exchanges = ${notIncludedPairs}`)
+      // const pairsToSub = this.pairs;
+   
+      await Promise.all(pairsToSub.map(symbol => this.startSymoblLoop(exchanges, symbol)))
     } catch (e) { 
-      console.log('error startOrderBookListener')
+      console.log('error startChekingPairs', e)
     }
   }
+
+  getMatchingPairs(lists: string[][]): string[] {
+    // Create a Set from the first list for faster lookups
+    const set1 = new Set(lists[0]);
+    
+    const matchingPairs = lists.slice(1).reduce((accumulator, currentList) => {
+      const filteredArray = Array.from(accumulator).filter(pair => currentList.includes(pair));
+      return new Set(filteredArray);
+    }, set1);
+    
+    return Array.from(matchingPairs);
+  }
+  
+  
       
   
-  async startSymoblListener(exchange: ccxt.Exchange, symbol: string) { 
+  async startSymoblLoop(exchanges: ccxt.Exchange[], symbol: string) { 
+      console.log('Starting loop')
       while (true) { 
         try { 
-          const orderbook = await exchange.watchOrderBook(symbol)
-          await this.handleWS_symbol(exchange, symbol, orderbook)
+          const [base, quaote] = symbol.split('/')
+          
+          const orderBookPromises = exchanges.map(exchange => exchange.fetchOrderBook(symbol));
+          const orderbooksPromise: Promise<ccxt.OrderBook[]> = Promise.all(orderBookPromises)
+          const orderbooks = await orderbooksPromise
+          const orderBookresults = [];
+
+          // Loop through each exchange and calculate the bid and ask prices
+          exchanges.forEach((exchange, index) => {
+            const bid = orderbooks[index]['bids'][0][0] * (1 - this.exchangeFees[exchange.id].buy / 100);
+            const ask = orderbooks[index]['asks'][0][0] * (1 - this.exchangeFees[exchange.id].sell / 100);
+            orderBookresults.push([bid, ask, exchange.id]);
+            const pr1 = this.createPriceRecord(exchange.id, symbol, bid)
+            const pr2 = this.createPriceRecord(exchange.id, `${quaote}/${base}`, 1/ask)
+            Promise.all([pr1, pr2])
+
+          });
+          
+          const Differ1Ex2Ex = this.calculateBidAskDifference(orderBookresults[0], orderBookresults[1])
+          const Differ1Ex3Ex = this.calculateBidAskDifference(orderBookresults[0], orderBookresults[2])
+
+          const result = `
+          ------------- ${exchanges[0].id} ---------------- ${exchanges[1].id} ----------------  ${exchanges[2].id}
+          ${base}/${quaote} price ${orderBookresults[0][0].toFixed(3)}     (bid): price ${orderBookresults[1][0].toFixed(3)} diff ${Differ1Ex2Ex[0].toFixed(3)}  price price ${orderBookresults[2][0].toFixed(3)}(bid): ${Differ1Ex3Ex[0].toFixed(3)}
+          ${quaote}/${base} price ${orderBookresults[0][1].toFixed(3)}     (ask): price ${orderBookresults[1][1].toFixed(3)} diff ${Differ1Ex2Ex[1].toFixed(3)}  price price ${orderBookresults[2][1].toFixed(3)}(ask): ${Differ1Ex3Ex[1].toFixed(3)}
+          `;
+          console.log(result)
+          await this.sleep(30)
         } catch (e) { 
-          console.log('error startSymoblListener',symbol, e)
+          console.log('error startSymoblLoop',symbol, e)
+          await this.sleep(3)
         }
       }
     }
 
-
-  async handleWS_symbol(exchange: ccxt.Exchange, symbol: string, orderbook: ccxt.OrderBook) {
-    const bid = orderbook['bids'][0][0]
-    const ask = orderbook['asks'][0][0]
-    this.save_pair_info(exchange.id, symbol, ask, bid)
-    // console.log(new Date (), this.cex_pairs)
-    
-    //save
-    //
+  calculateBidAskDifference(bookInfoEx1: [number, number, string], bookInfoEx2: [number, number, string]): [number, number, [string, string]] {
+    const bidDiffer = this.calculatePercentageDifference(bookInfoEx1[0], bookInfoEx2[0])
+    const askDiffer = this.calculatePercentageDifference(bookInfoEx1[1], bookInfoEx2[1])
+    return [bidDiffer, askDiffer, [bookInfoEx1[2], bookInfoEx2[2]]]
   }
+
+  calculatePercentageDifference(oldValue: number, newValue: number): number {
+    const absoluteDifference = newValue - oldValue
+    const percentageDifference = (absoluteDifference / oldValue) * 100;
+    return percentageDifference;
+  }
+
+  async createPriceRecord(exchangeName: string, symbol: string, price: number): Promise<priceRecord> {
+    const record = new priceRecord();
+    record.timeAdded = Date.now();
+    record.exchange = exchangeName;
+    record.symbol = symbol;
+    record.price = price;
+    const savedRecord = await this.db.saveNewRecord(record);
+    return savedRecord;
+  }
+
+  async sleep(seconds = 1): Promise<void> {
+    await new Promise((resolve) => setTimeout(resolve, seconds * 1000));
+  }
+
+
+
+}
   // save to big data structure
 
-  save_pair_info(name: string, symbol: string, price_ask: number, price_bid: number) {
-    const [symbol0, symbol1] = symbol.split('/');
-  
-    if (!this.cex_pairs[name]) {
-      this.cex_pairs[name] = {};
-    }
-  
-    if (this.cex_pairs[name][symbol0] && this.cex_pairs[name][symbol0][symbol1]) {
-      this.cex_pairs[name][symbol0][symbol1] = price_ask;
-    } else {
-      if (!this.cex_pairs[name][symbol0]) {
-        this.cex_pairs[name][symbol0] = {};
-      }
-      this.cex_pairs[name][symbol0][symbol1] = price_ask;
-    }
-  
-    if (this.cex_pairs[name][symbol1] && this.cex_pairs[name][symbol1][symbol0]) {
-      this.cex_pairs[name][symbol1][symbol0] = 1 / price_bid;
-    } else {
-      if (!this.cex_pairs[name][symbol1]) {
-        this.cex_pairs[name][symbol1] = {};
-      }
-      this.cex_pairs[name][symbol1][symbol0] = 1 / price_bid;
-    }
-  }
-}

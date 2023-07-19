@@ -1,11 +1,13 @@
 import { Module } from '@nestjs/common';
 import { SaverService } from './api.service';
 import { ConfigService } from '@nestjs/config';
-import { RedisCacheService } from 'src/redis/redis.service';
+import { DatabaseService } from 'src/database/database.service';
+import { SequelizeModule } from '@nestjs/sequelize';
+import { priceRecord } from 'src/database/priceRecord.model';
 
 @Module({
-  imports: [],
+  imports: [SequelizeModule.forFeature([priceRecord])],
   controllers: [],
-  providers: [SaverService, ConfigService, RedisCacheService],
+  providers: [SaverService, ConfigService, DatabaseService],
 })
 export class CexSaverModule {}

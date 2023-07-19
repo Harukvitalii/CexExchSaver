@@ -12,6 +12,7 @@ import { BackgroundService } from './deamons/trans.deamon.provider';
 import { SaverService } from './cex/api.service';
 import { MyConfigModule } from './configuration/config.module';
 import { EventEmitterModule } from '@nestjs/event-emitter';
+import { DatabaseService } from './database/database.service';
 // import { RedisCacheModule } from './redis/redis.module';
 // import { RedisCacheService } from './redis/redis.service';
 
@@ -37,6 +38,7 @@ import { EventEmitterModule } from '@nestjs/event-emitter';
     DatabaseModule,
     MyConfigModule,
     // RedisCacheModule,
+    SequelizeModule.forFeature([priceRecord]),
     ScheduleModule.forRoot(),
     EventEmitterModule.forRoot(),
   ],
@@ -46,6 +48,7 @@ import { EventEmitterModule } from '@nestjs/event-emitter';
     ConfigService,
     BackgroundService,
     SaverService,
+    DatabaseService,
     // RedisCacheService,
   ],
 })
