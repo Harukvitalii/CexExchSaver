@@ -12,7 +12,7 @@ interface cexPairs {
 
 
 @Injectable()
-export class SaverService {
+export class SaverServiceOld {
   pairs: string[]
   exchanges: string[]
   cex_pairs: cexPairs
@@ -45,9 +45,9 @@ export class SaverService {
               success = true;
             } catch (error) {
               retries--;
-              console.error(`Error creating exchange ${id}`);
-              console.log(`Retrying ${3 - retries}/${3} in 1500 ms...`);
-              await new Promise(resolve => setTimeout(resolve, 1500));
+              console.error(`Error creating exchange ${id}:`, error);
+              console.log(`Retrying ${3 - retries}/${3} in 500 ms...`);
+              await new Promise(resolve => setTimeout(resolve, 500));
             }
           }
     
@@ -67,7 +67,7 @@ export class SaverService {
   }
 
 
-  async startChekingPairs(exchange: ccxt.Exchange) { 
+  async startOrderBookListener(exchange: ccxt.Exchange) { 
     try { 
       const pairsToSubscribe = exchange.symbols.filter(symbol => this.pairs.includes(symbol));
       console.log("symb to subscribe", pairsToSubscribe)
@@ -77,7 +77,6 @@ export class SaverService {
     }
   }
       
-  
   async startSymoblListener(exchange: ccxt.Exchange, symbol: string) { 
       while (true) { 
         try { 

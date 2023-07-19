@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { EventEmitter2, OnEvent } from '@nestjs/event-emitter';
-import { SaverService } from 'src/cex/api.service';
+import { SaverService } from 'src/cex/apiv2.service';
 import * as ccxt from 'ccxt';
 import { Cron, Interval } from '@nestjs/schedule';
 import { RedisCacheService } from 'src/redis/redis.service';
