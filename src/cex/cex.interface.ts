@@ -4,3 +4,12 @@ export interface ExchangeFees {
     sell: number;
   };
 }
+export interface pairToSub {
+  [exchangeName: string]: {
+    reverse: boolean;
+  };
+}
+
+export interface pairToSubDict {
+  [name: string]: pairToSub;
+}

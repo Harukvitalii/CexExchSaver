@@ -3,7 +3,7 @@ import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 // import axios from 'axios';
 import * as ccxt from 'ccxt';
-import { ExchangeFees } from './cex.interface';
+import { ExchangeFees, pairToSub, pairToSubDict } from './cex.interface';
 import { DatabaseService } from 'src/database/database.service';
 import { priceRecord } from 'src/database/priceRecord.model';
 
@@ -56,14 +56,34 @@ export class SaverService {
 
   async startChekingPairs(exchanges: ccxt.Exchange[]) { 
     try { 
-      const pairsToSubscribeExs = exchanges.map(exchange => exchange.symbols.filter(symbol  => this.pairs.includes(symbol)))
-      const pairsToSub = this.getMatchingPairs(pairsToSubscribeExs)
+      const pairsToSubscribeExs: pairToSubDict = {}
+      const REVERSED_PAIRS = this.pairs.map(pair => {
+        const [base, quote] = pair.split('/');
+        return `${quote}/${base}`;
+      });
+      for (const exchange of exchanges) { 
+        for (const symbol of exchange.symbols) { 
+          
+          if (this.pairs.includes(symbol)) {
+            pairsToSubscribeExs[symbol] ??= {};
+            pairsToSubscribeExs[symbol][exchange.id] = {"reverse": false}
+          }
+          else if (REVERSED_PAIRS.includes(symbol)) { 
+            const [base, quaote] = symbol.split('/')
+            pairsToSubscribeExs[`${quaote}/${base}`] ??= {};
+            pairsToSubscribeExs[`${quaote}/${base}`][exchange.id] = {"reverse": true}
+          }
+        }
+      }
       
-      const notIncludedPairs = this.pairs.filter(pair => !pairsToSub.includes(pair));
-      console.log(`pairs to subscribe = ${pairsToSub}, pairs that are not in all exchanges = ${notIncludedPairs}`)
+      console.log(pairsToSubscribeExs)
+
+
+      
+      // const pairsToSub = this.getMatchingPairs(pairsToSubscribeExs)
       // const pairsToSub = this.pairs;
    
-      await Promise.all(pairsToSub.map(symbol => this.startSymoblLoop(exchanges, symbol)))
+      await Promise.all(this.pairs.map(pair => this.startSymoblLoop(exchanges, pair, pairsToSubscribeExs)))
     } catch (e) { 
       console.log('error startChekingPairs', e)
     }
@@ -84,25 +104,42 @@ export class SaverService {
   
       
   
-  async startSymoblLoop(exchanges: ccxt.Exchange[], symbol: string) { 
+  async startSymoblLoop(exchanges: ccxt.Exchange[], pair: string, pairsToSub: pairToSubDict) { 
       console.log('Starting loop')
       while (true) { 
         try { 
-          const [base, quaote] = symbol.split('/')
+          const [base, quaote] = pair.split('/')
           
-          const orderBookPromises = exchanges.map(exchange => exchange.fetchOrderBook(symbol));
+          const orderBookPromises = exchanges.map(exchange => {
+            if (pairsToSub[pair][exchange.id].reverse) {
+              return exchange.fetchOrderBook(`${quaote}/${base}`)
+            }
+            else { 
+              return exchange.fetchOrderBook(pair)
+              }
+            }
+          );
           const orderbooksPromise: Promise<ccxt.OrderBook[]> = Promise.all(orderBookPromises)
           const orderbooks = await orderbooksPromise
           const orderBookresults = [];
 
           // Loop through each exchange and calculate the bid and ask prices
           exchanges.forEach((exchange, index) => {
-            const bid = orderbooks[index]['bids'][0][0] * (1 - this.exchangeFees[exchange.id].buy / 100);
-            const ask = orderbooks[index]['asks'][0][0] * (1 - this.exchangeFees[exchange.id].sell / 100);
+            let bid: number;
+            let ask: number;
+            if (pairsToSub[pair][exchange.id].reverse)  {
+              ask = 1/ (orderbooks[index]['bids'][0][0] * (1 - this.exchangeFees[exchange.id].buy / 100));
+              bid = 1/ (orderbooks[index]['asks'][0][0] * (1 - this.exchangeFees[exchange.id].sell / 100));
+              console.log('reverse : ', pairsToSub[pair][exchange.id])
+            }
+            else {
+              bid = orderbooks[index]['bids'][0][0] * (1 - this.exchangeFees[exchange.id].buy / 100);
+              ask = orderbooks[index]['asks'][0][0] * (1 - this.exchangeFees[exchange.id].sell / 100);
+            }
             orderBookresults.push([bid, ask, exchange.id]);
-            const pr1 = this.createPriceRecord(exchange.id, symbol, bid)
-            const pr2 = this.createPriceRecord(exchange.id, `${quaote}/${base}`, 1/ask)
-            Promise.all([pr1, pr2])
+            // const pr1 = this.createPriceRecord(exchange.id, pair, bid)
+            // const pr2 = this.createPriceRecord(exchange.id, `${quaote}/${base}`, 1/ask)
+            // Promise.all([pr1, pr2])
 
           });
           
@@ -111,13 +148,13 @@ export class SaverService {
 
           const result = `
           ------------- ${exchanges[0].id} ---------------- ${exchanges[1].id} ----------------  ${exchanges[2].id}
-          ${base}/${quaote} price ${orderBookresults[0][0].toFixed(3)}     (bid): price ${orderBookresults[1][0].toFixed(3)} diff ${Differ1Ex2Ex[0].toFixed(3)}  price price ${orderBookresults[2][0].toFixed(3)}(bid): ${Differ1Ex3Ex[0].toFixed(3)}
-          ${quaote}/${base} price ${orderBookresults[0][1].toFixed(3)}     (ask): price ${orderBookresults[1][1].toFixed(3)} diff ${Differ1Ex2Ex[1].toFixed(3)}  price price ${orderBookresults[2][1].toFixed(3)}(ask): ${Differ1Ex3Ex[1].toFixed(3)}
+          ${base}/${quaote} price ${orderBookresults[0][0].toFixed(5)}     (bid): price ${orderBookresults[1][0].toFixed(5)} diff ${Differ1Ex2Ex[0].toFixed(5)}  price price ${orderBookresults[2][0].toFixed(5)}(bid): ${Differ1Ex3Ex[0].toFixed(5)}
+          ${quaote}/${base} price ${orderBookresults[0][1].toFixed(5)}     (ask): price ${orderBookresults[1][1].toFixed(5)} diff ${Differ1Ex2Ex[1].toFixed(5)}  price price ${orderBookresults[2][1].toFixed(5)}(ask): ${Differ1Ex3Ex[1].toFixed(5)}
           `;
           console.log(result)
           await this.sleep(30)
         } catch (e) { 
-          console.log('error startSymoblLoop',symbol, e)
+          console.log('error startSymoblLoop',pair, e)
           await this.sleep(3)
         }
       }

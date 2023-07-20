@@ -8,10 +8,10 @@ export class DatabaseService {
     @InjectModel(priceRecord)
     private recordModel: typeof priceRecord,
   ) {
-    priceRecord
-      .sync({ force: true })
-      .then(() => console.log('Record table synced'))
-      .catch((error) => console.error('Error creating users table:', error));
+    // priceRecord
+    //   .sync({ force: true })
+    //   .then(() => console.log('Record table synced'))
+    //   .catch((error) => console.error('Error creating users table:', error));
     // Address.sync()
     // .then(() => console.log('Contract table synced'))
     // .catch((error) => console.error('Error creating contracts table:', error));
