@@ -25,10 +25,11 @@ export class BackgroundService {
     while (true) {
       try {
         const exchanges = await this.cctxBulk.getExchanges();
+        const pairsToLoop = JSON.parse(
+          this.configService.get('ALLOWED_EXCHANGES'),
+        );
 
-        const pairs = [
-          [exchanges['whitebit'], exchanges['kraken'], exchanges['bitfinex']],
-        ];
+        const pairs = [pairsToLoop.map((cex) => exchanges[cex])];
         await Promise.all(
           pairs.map(async (cexExchanges: ccxt.Exchange[]) => {
             try {
