@@ -152,7 +152,7 @@ export class SaverService {
           ${quaote}/${base} price ${orderBookresults[0][1].toFixed(5)}     (ask): price ${orderBookresults[1][1].toFixed(5)} diff ${Differ1Ex2Ex[1].toFixed(5)}  price price ${orderBookresults[2][1].toFixed(5)}(ask): ${Differ1Ex3Ex[1].toFixed(5)}
           `;
           console.log(result)
-          await this.sleep(30)
+          await this.sleep(this.configService.get<number>("INTERVAL_SLEEP_RESULT"))
         } catch (e) { 
           console.log('error startSymoblLoop',pair, e)
           await this.sleep(3)
