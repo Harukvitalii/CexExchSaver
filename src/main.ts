@@ -7,17 +7,15 @@ async function bootstrap() {
 }
 bootstrap();
 
-
-
-// exeptions in websocket connection (disconnect, lost peer etc)
-// optimizing comparizon
-// database save data
+// exeptions in websocket connection (disconnect, lost peer etc) / rewrite to rest api +
+// optimizing comparizon +
+// database save data +
 // adding timestemp to prices
 // configure logging
 // write logging
 //
 
-// commissions for price
+// commissions for price 
 
 // в моменте різниця в відсотках
 // -------------основа WHITEBIT --- KRAKEN, BITSTAMP
@@ -26,3 +24,6 @@ bootstrap();
 // кожні 30 секунд
 
 //
+//bitstamp
+// \t  \n
+// привести до одної валюти 

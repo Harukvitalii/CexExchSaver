@@ -3,7 +3,7 @@ import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 // import axios from 'axios';
 import * as ccxt from 'ccxt';
-import { ExchangeFees, pairToSub, pairToSubDict } from './cex.interface';
+import { ExchangeFees, pairToSubDict } from './cex.interface';
 import { DatabaseService } from 'src/database/database.service';
 import { priceRecord } from 'src/database/priceRecord.model';
 
@@ -55,6 +55,7 @@ export class SaverService {
 
 
   async startChekingPairs(exchanges: ccxt.Exchange[]) { 
+    // check and save if pairs is reverse
     try { 
       const pairsToSubscribeExs: pairToSubDict = {}
       const REVERSED_PAIRS = this.pairs.map(pair => {
@@ -75,14 +76,11 @@ export class SaverService {
           }
         }
       }
-      
       console.log(pairsToSubscribeExs)
 
-
-      
       // const pairsToSub = this.getMatchingPairs(pairsToSubscribeExs)
       // const pairsToSub = this.pairs;
-   
+      // loop one pair printing difference on exchanges
       await Promise.all(this.pairs.map(pair => this.startSymoblLoop(exchanges, pair, pairsToSubscribeExs)))
     } catch (e) { 
       console.log('error startChekingPairs', e)
@@ -105,11 +103,11 @@ export class SaverService {
       
   
   async startSymoblLoop(exchanges: ccxt.Exchange[], pair: string, pairsToSub: pairToSubDict) { 
-      console.log('Starting loop')
+      console.log(`Starting loop ${pair}`)
       while (true) { 
         try { 
           const [base, quaote] = pair.split('/')
-          
+          //create pormises for orderbook load
           const orderBookPromises = exchanges.map(exchange => {
             if (pairsToSub[pair][exchange.id].reverse) {
               return exchange.fetchOrderBook(`${quaote}/${base}`)
@@ -119,6 +117,7 @@ export class SaverService {
               }
             }
           );
+          //resolve
           const orderbooksPromise: Promise<ccxt.OrderBook[]> = Promise.all(orderBookPromises)
           const orderbooks = await orderbooksPromise
           const orderBookresults = [];
@@ -128,28 +127,33 @@ export class SaverService {
             let bid: number;
             let ask: number;
             if (pairsToSub[pair][exchange.id].reverse)  {
-              ask = 1/ (orderbooks[index]['bids'][0][0] * (1 - this.exchangeFees[exchange.id].buy / 100));
-              bid = 1/ (orderbooks[index]['asks'][0][0] * (1 - this.exchangeFees[exchange.id].sell / 100));
-              console.log('reverse : ', pairsToSub[pair][exchange.id])
+              bid = 1 / (orderbooks[index]['bids'][0][0] * (1 - this.exchangeFees[exchange.id].buy / 100));
+              ask = 1 / (orderbooks[index]['asks'][0][0] * (1 - this.exchangeFees[exchange.id].sell / 100));
+              console.log(exchange.id, pairsToSub[pair][exchange.id].reverse, ask)
             }
             else {
-              bid = orderbooks[index]['bids'][0][0] * (1 - this.exchangeFees[exchange.id].buy / 100);
-              ask = orderbooks[index]['asks'][0][0] * (1 - this.exchangeFees[exchange.id].sell / 100);
+              // reverse, becouse we show USDT/BTC first
+              ask =  (orderbooks[index]['bids'][0][0] * (1 - this.exchangeFees[exchange.id].buy / 100));
+              bid =  (orderbooks[index]['asks'][0][0] * (1 - this.exchangeFees[exchange.id].sell / 100));
             }
             orderBookresults.push([bid, ask, exchange.id]);
             // const pr1 = this.createPriceRecord(exchange.id, pair, bid)
-            // const pr2 = this.createPriceRecord(exchange.id, `${quaote}/${base}`, 1/ask)
+            // const pr2 = this.createPriceRecord(exchange.id, `${quaote}/${base}`, ask)
             // Promise.all([pr1, pr2])
 
           });
-          
+          //calculate difference in exchanges
           const Differ1Ex2Ex = this.calculateBidAskDifference(orderBookresults[0], orderBookresults[1])
           const Differ1Ex3Ex = this.calculateBidAskDifference(orderBookresults[0], orderBookresults[2])
-
+          // Pair EUR/USDT
+          // --------------------- whitebit -------------------- kraken -----------------------------  bitstamp
+          // EUR -> USDT        0.89461 USDT                 0.89811 USDT (+0.39%)                        0.89807 USDT (+0.38%)
+          // USDT -> EUR        0.89451 USDT                 0.89801 USDT (+0.39%)                        0.89804 USDT (+0.39%)
           const result = `
-          ------------- ${exchanges[0].id} ---------------- ${exchanges[1].id} ----------------  ${exchanges[2].id}
-          ${base}/${quaote} price ${orderBookresults[0][0].toFixed(5)}     (bid): price ${orderBookresults[1][0].toFixed(5)} diff ${Differ1Ex2Ex[0].toFixed(5)}  price price ${orderBookresults[2][0].toFixed(5)}(bid): ${Differ1Ex3Ex[0].toFixed(5)}
-          ${quaote}/${base} price ${orderBookresults[0][1].toFixed(5)}     (ask): price ${orderBookresults[1][1].toFixed(5)} diff ${Differ1Ex2Ex[1].toFixed(5)}  price price ${orderBookresults[2][1].toFixed(5)}(ask): ${Differ1Ex3Ex[1].toFixed(5)}
+          pair ${pair}
+          ------------- ${exchanges[0].id} -------------------- ${exchanges[1].id} ------------------  ${exchanges[2].id}
+          ${base} -> ${quaote} price ${orderBookresults[0][0].toFixed(5)} USDT\t${orderBookresults[1][0].toFixed(5)} USDT (${Differ1Ex2Ex[0] >= 0 ? '+' : ''}${Differ1Ex2Ex[0].toFixed(3)}%)\t ${orderBookresults[2][0].toFixed(5)} USDT (${Differ1Ex3Ex[0] >= 0 ? '+' : ''}${Differ1Ex3Ex[0].toFixed(3)}%)
+          ${quaote} -> ${base} price ${orderBookresults[0][1].toFixed(5)} USDT\t${orderBookresults[1][1].toFixed(5)} USDT (${Differ1Ex2Ex[1] >= 0 ? '+' : ''}${Differ1Ex2Ex[1].toFixed(3)}%)\t ${orderBookresults[2][1].toFixed(5)} USDT (${Differ1Ex3Ex[1] >= 0 ? '+' : ''}${Differ1Ex3Ex[1].toFixed(3)}%)
           `;
           console.log(result)
           await this.sleep(this.configService.get<number>("INTERVAL_SLEEP_RESULT"))
@@ -191,3 +195,7 @@ export class SaverService {
 }
   // save to big data structure
 
+  // pair EUR/USDT
+  // ------------- whitebit -------------------- kraken ------------------  bitstamp
+  // EUR -> USDT price 1.11432 USDT        1.10851 USDT (-0.521%)   1.10891 USDT (-0.486%)
+  // USDT -> EUR price 1.11419 USDT        1.10839 USDT (-0.521%)   1.10889 USDT (-0.476%)

@@ -17,7 +17,7 @@ export class BackgroundService {
   async onApplicationBootstrap() {
     console.log('start events');
     this.eventEmitter.emit('start_exchange_motinoring');
-    this.eventEmitter.emit('start_checking_saving');
+    // this.eventEmitter.emit('start_checking_saving');
   }
 
   @OnEvent('start_exchange_motinoring')
@@ -25,11 +25,11 @@ export class BackgroundService {
     while (true) {
       try {
         const exchanges = await this.cctxBulk.getExchanges();
-        const pairsToLoop = JSON.parse(
+        const pairsToLoop: string[] = JSON.parse(
           this.configService.get('ALLOWED_EXCHANGES'),
         );
 
-        const pairs = [pairsToLoop.map((cex) => exchanges[cex])];
+        const pairs = [pairsToLoop.map((exchange) => exchanges[exchange])];
         await Promise.all(
           pairs.map(async (cexExchanges: ccxt.Exchange[]) => {
             try {
