@@ -6,7 +6,7 @@ import * as ccxt from 'ccxt';
 import { ExchangeFees, pairToSubDict } from './cex.interface';
 import { DatabaseService } from 'src/database/database.service';
 import { priceRecord } from 'src/database/priceRecord.model';
-
+import { v4 as uuidv4 } from 'uuid'
 //config service
 
 interface cexPairs {
@@ -123,6 +123,7 @@ export class SaverService {
           const orderBookresults = [];
 
           // Loop through each exchange and calculate the bid and ask prices
+          const groupHash = uuidv4();
           exchanges.forEach((exchange, index) => {
             let bid: number;
             let ask: number;
@@ -137,8 +138,8 @@ export class SaverService {
               bid =  (orderbooks[index]['asks'][0][0] * (1 - this.exchangeFees[exchange.id].sell / 100));
             }
             orderBookresults.push([bid, ask, exchange.id]);
-            const pr1 = this.createPriceRecord(exchange.id, pair, bid)
-            const pr2 = this.createPriceRecord(exchange.id, `${quaote}/${base}`, ask)
+            const pr1 = this.createPriceRecord(exchange.id, pair, bid, groupHash)
+            const pr2 = this.createPriceRecord(exchange.id, `${quaote}/${base}`, ask, groupHash)
             Promise.all([pr1, pr2])
 
           });
@@ -176,12 +177,13 @@ export class SaverService {
     return percentageDifference;
   }
 
-  async createPriceRecord(exchangeName: string, symbol: string, price: number): Promise<priceRecord> {
+  async createPriceRecord(exchangeName: string, symbol: string, price: number, groupHash: string): Promise<priceRecord> {
     const record = new priceRecord();
     record.timeAdded = Date.now();
     record.exchange = exchangeName;
     record.symbol = symbol;
     record.price = price;
+    record.groupHash = groupHash; 
     const savedRecord = await this.db.saveNewRecord(record);
     return savedRecord;
   }

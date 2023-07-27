@@ -21,6 +21,12 @@ export class priceRecord extends Model {
   symbol: string;
 
   @Column({
+    type: DataType.STRING(64),
+    allowNull: false,
+  })
+  groupHash: string;
+
+  @Column({
     type: DataType.FLOAT,
     allowNull: false,
   })
