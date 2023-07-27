@@ -137,9 +137,9 @@ export class SaverService {
               bid =  (orderbooks[index]['asks'][0][0] * (1 - this.exchangeFees[exchange.id].sell / 100));
             }
             orderBookresults.push([bid, ask, exchange.id]);
-            // const pr1 = this.createPriceRecord(exchange.id, pair, bid)
-            // const pr2 = this.createPriceRecord(exchange.id, `${quaote}/${base}`, ask)
-            // Promise.all([pr1, pr2])
+            const pr1 = this.createPriceRecord(exchange.id, pair, bid)
+            const pr2 = this.createPriceRecord(exchange.id, `${quaote}/${base}`, ask)
+            Promise.all([pr1, pr2])
 
           });
           //calculate difference in exchanges

@@ -1,0 +1,14 @@
+version: '3.5'
+
+
+services:
+  db_saver: 
+    container_name: db_saver
+    ports:
+      - "5433:5432"
+    environment:
+      - POSTGRES_PASSWORD=root
+      - POSTGRES_USER=admin
+    image: postgres:15.3-alpine3.18 
+
+  
