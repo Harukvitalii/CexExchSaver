@@ -1,8 +1,14 @@
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
+import { NestExpressBodyParserOptions } from '@nestjs/platform-express';
+import { join } from 'path';
+
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
+  // app.useStaticAssets(join(__dirname, '..', 'public'));
+  // app.setBaseViewsDir(join(__dirname, '..', 'views'));
+  // app.setViewEngine('hbs');
   await app.listen(4444);
 }
 bootstrap();
@@ -27,3 +33,11 @@ bootstrap();
 //bitstamp
 // \t  \n
 // привести до одної валюти 
+
+
+//табличка пів години 10 хвилин як відрізняється
+
+// поділ по дням
+
+
+// react server

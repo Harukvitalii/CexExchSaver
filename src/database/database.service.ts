@@ -8,10 +8,10 @@ export class DatabaseService {
     @InjectModel(priceRecord)
     private recordModel: typeof priceRecord,
   ) {
-    // priceRecord
-    //   .sync({ force: true })
-    //   .then(() => console.log('Record table synced'))
-    //   .catch((error) => console.error('Error creating users table:', error));
+    priceRecord
+      .sync({ force: false })
+      .then(() => console.log('Record table synced'))
+      .catch((error) => console.error('Error creating users table:', error));
     // Address.sync()
     // .then(() => console.log('Contract table synced'))
     // .catch((error) => console.error('Error creating contracts table:', error));
@@ -28,8 +28,8 @@ export class DatabaseService {
 
   async loadRecords(): Promise<priceRecord[]> {
     try {
-      const res = await this.recordModel.findAll();
-      return res;
+      const records = await this.recordModel.findAll();
+      return records;
     } catch (error) {
       console.log(`error loading records, err: ${error.name}`);
       throw error;
