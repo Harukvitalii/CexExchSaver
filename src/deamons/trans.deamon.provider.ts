@@ -4,6 +4,8 @@ import { SaverService } from 'src/cex/api.service';
 import * as ccxt from 'ccxt';
 import { Cron, Interval } from '@nestjs/schedule';
 import { ConfigService } from '@nestjs/config';
+import { DatabaseService } from 'src/database/database.service';
+import { priceRecord } from 'src/database/priceRecord.model';
 
 @Injectable()
 export class BackgroundService {
@@ -13,11 +15,12 @@ export class BackgroundService {
     private readonly eventEmitter: EventEmitter2,
     private readonly cctxBulk: SaverService,
     private readonly configService: ConfigService,
+    private readonly db: DatabaseService,
   ) {}
   async onApplicationBootstrap() {
     console.log('start events');
-    this.eventEmitter.emit('start_exchange_motinoring');
-    // this.eventEmitter.emit('start_checking_saving');
+    // this.eventEmitter.emit('start_exchange_motinoring');
+    this.eventEmitter.emit('start_graph');
   }
 
   @OnEvent('start_exchange_motinoring')
@@ -48,7 +51,23 @@ export class BackgroundService {
       }
     }
   }
-
+  @OnEvent('start_graph')
+  async startGraph() {
+    const records: priceRecord[] = await this.db.loadRecords();
+    const filteredRecords = records.filter(
+      (rec) => rec.dataValues.symbol === 'EUR/USDT',
+    );
+    const recordsByGroup = new Map<string, priceRecord[]>();
+    for (const rec of filteredRecords.slice(0, 20)) {
+      const groupHash = rec.dataValues.groupHash;
+      if (recordsByGroup.has(groupHash)) {
+        recordsByGroup.get(groupHash).push(rec);
+      } else {
+        recordsByGroup.set(groupHash, [rec]);
+      }
+    }
+    console.log(recordsByGroup);
+  }
   // @Interval(3000)
   // async getPriceExchangeInfo() {
   //   console.log(new Date());

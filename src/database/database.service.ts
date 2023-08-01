@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/sequelize';
 import { priceRecord } from './priceRecord.model';
+import { Op } from 'sequelize';
 
 @Injectable()
 export class DatabaseService {
@@ -26,6 +27,24 @@ export class DatabaseService {
     }
   }
 
+  async loadRecordsBetweenData(
+    startDate: Date,
+    endDate: Date,
+  ): Promise<priceRecord[]> {
+    try {
+      const records = await this.recordModel.findAll({
+        where: {
+          createdAt: {
+            [Op.between]: [startDate, endDate],
+          },
+        },
+      });
+      return records;
+    } catch (error) {
+      console.log(`error loading records, err: ${error.name}`);
+      throw error;
+    }
+  }
   async loadRecords(): Promise<priceRecord[]> {
     try {
       const records = await this.recordModel.findAll();

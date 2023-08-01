@@ -1,0 +1,4 @@
+
+server: docker exec db_saver pg_dump -U admin -d postgres > mytable_backup.sql
+
+local: scp root@45.131.64.155:/root/mytable_backup.sql ./
