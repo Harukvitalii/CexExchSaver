@@ -54,7 +54,13 @@ export class BackgroundService {
   }
   @OnEvent('start_graph')
   async startGraph() {
-    const records: priceRecord[] = await this.db.loadRecords();
+    const startData = new Date('2023-07-30T10:13:41.977Z');
+    const endData = new Date('2023-07-30T10:14:41.977Z');
+    // const records: priceRecord[] = await this.db.loadRecords();
+    const records: priceRecord[] = await this.db.loadRecordsBetweenData(
+      startData,
+      endData,
+    );
     const filteredRecords = records.filter(
       (rec) => rec.dataValues.symbol === 'EUR/USDT',
     );

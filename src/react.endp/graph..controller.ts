@@ -1,4 +1,4 @@
-import { Controller, Get, Injectable } from '@nestjs/common';
+import { Controller, Get, Injectable, Param, Query } from '@nestjs/common';
 import { EventEmitter2, OnEvent } from '@nestjs/event-emitter';
 import { SaverService } from 'src/cex/api.service';
 import * as ccxt from 'ccxt';
@@ -12,14 +12,23 @@ import fs from 'fs';
 export class graphController {
   constructor(private readonly db: DatabaseService) {}
 
-  @Get()
-  async startGraph(): Promise<any[]> {
-    const records: priceRecord[] = await this.db.loadRecords();
+  @Get(':startData/:endData')
+  async startGraph(
+    @Param('startData') startData: string,
+    @Param('endData') endData: string,
+  ): Promise<any[]> {
+    console.log(startData, endData);
+    // const records: priceRecord[] = await this.db.loadRecords();
+    const records: priceRecord[] = await this.db.loadRecordsBetweenData(
+      new Date(startData),
+      new Date(endData),
+    );
+
     const filteredRecords = records.filter(
       (rec) => rec.dataValues.symbol === 'EUR/USDT',
     );
     const recordsByGroup = new Map<string, priceRecord[]>();
-    for (const rec of filteredRecords.slice(0, 3333)) {
+    for (const rec of filteredRecords.slice(0, 8640)) {
       const groupHash = rec.dataValues.groupHash;
       if (recordsByGroup.has(groupHash)) {
         recordsByGroup.get(groupHash).push(rec);
