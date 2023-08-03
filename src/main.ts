@@ -3,9 +3,11 @@ import { AppModule } from './app.module';
 import { NestExpressBodyParserOptions } from '@nestjs/platform-express';
 import { join } from 'path';
 
+// ./src/main.ts
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
+  app.enableCors({ origin: '*' });
   // app.useStaticAssets(join(__dirname, '..', 'public'));
   // app.setBaseViewsDir(join(__dirname, '..', 'views'));
   // app.setViewEngine('hbs');
@@ -21,7 +23,7 @@ bootstrap();
 // write logging
 //
 
-// commissions for price 
+// commissions for price
 
 // в моменте різниця в відсотках
 // -------------основа WHITEBIT --- KRAKEN, BITSTAMP
@@ -32,12 +34,10 @@ bootstrap();
 //
 //bitstamp
 // \t  \n
-// привести до одної валюти 
-
+// привести до одної валюти
 
 //табличка пів години 10 хвилин як відрізняється
 
 // поділ по дням
-
 
 // react server
