@@ -16,7 +16,7 @@ export class graphController {
   async startGraph(
     @Param('startData') startData: string,
     @Param('endData') endData: string,
-  ): Promise<any[]> {
+  ) {
     console.log(startData, endData);
     // const records: priceRecord[] = await this.db.loadRecords();
     const records: priceRecord[] = await this.db.loadRecordsBetweenData(
@@ -28,7 +28,7 @@ export class graphController {
       (rec) => rec.dataValues.symbol === 'EUR/USDT',
     );
     const recordsByGroup = new Map<string, priceRecord[]>();
-    for (const rec of filteredRecords.slice(0, 8640)) {
+    for (const rec of filteredRecords) {
       const groupHash = rec.dataValues.groupHash;
       if (recordsByGroup.has(groupHash)) {
         recordsByGroup.get(groupHash).push(rec);

@@ -38,6 +38,7 @@ export class DatabaseService {
             [Op.between]: [startDate, endDate],
           },
         },
+        order: [['createdAt', 'ASC']],
       });
       return records;
     } catch (error) {
