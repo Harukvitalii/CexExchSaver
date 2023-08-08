@@ -80,7 +80,7 @@ export class BackgroundService {
         addedAt: new Date(parseInt(priceRecord.dataValues.timeAdded, 10)),
         price: priceRecord.dataValues.price,
       }));
-      console.log(result);
+      // console.log(result);
     }
     // async getPriceExchangeInfo() {
     //   console.log(new Date());
