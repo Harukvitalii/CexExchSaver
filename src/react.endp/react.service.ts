@@ -63,9 +63,7 @@ export class reactService {
         
         const TableRecords: tableRecord[] = []
         for (const records of filteredByStepRecords) { 
-            console.log(records)
             const whitebitRec = records.filter(info => info.exchange === 'whitebit')[0];
-            console.log(whitebitRec)
             const toExchangeRec = records.filter(info => info.exchange === toExchange)[0];
             const difference:number = this.calculatePercentageDifference(whitebitRec.price, toExchangeRec.price);
             TableRecords.push({datetime: whitebitRec.addedAt, whitebitPrice: whitebitRec.price.toFixed(digitsAfterDot), toExchangePrice: toExchangeRec.price.toFixed(digitsAfterDot), difference: difference.toFixed(digitsAfterDot)})
