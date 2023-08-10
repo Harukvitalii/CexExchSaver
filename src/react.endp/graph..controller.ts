@@ -10,12 +10,16 @@ import fs from 'fs';
 
 @Controller('graph')
 export class graphController {
-  constructor(private readonly db: DatabaseService) {}
+  constructor(
+    private readonly db: DatabaseService,
+    private readonly cexApi: SaverService,
+  ) {}
 
-  @Get(':startData/:endData')
+  @Get(':startData/:endData/:step')
   async startGraph(
     @Param('startData') startData: string,
     @Param('endData') endData: string,
+    @Param('step') step: string,
   ) {
     console.log(startData, endData);
     // const records: priceRecord[] = await this.db.loadRecords();
@@ -23,7 +27,7 @@ export class graphController {
       new Date(startData),
       new Date(endData),
     );
-
+    const stepNumber: number = this.cexApi.convertIntervalToStep(step);
     const filteredRecords = records.filter(
       (rec) => rec.dataValues.symbol === 'EUR/USDT',
     );
@@ -46,7 +50,10 @@ export class graphController {
       }));
       GroupGraphData.push(result);
     }
-    return GroupGraphData;
+    const result = GroupGraphData.filter(
+      (record, index) => index % stepNumber === 0,
+    );
+    return result;
     // async getPriceExchangeInfo() {
     //   console.log(new Date());
     //   const prices = await this.redis.get('exchnage-prices');

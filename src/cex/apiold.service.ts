@@ -3,12 +3,11 @@ import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 // import axios from 'axios';
 import * as ccxt from 'ccxt';
+import { cexPairs } from './cex.interface';
 
 //config service
 
-interface cexPairs {
-  [name: string]: Record<string, Record<string, number>>; 
-}
+
 
 
 @Injectable()
