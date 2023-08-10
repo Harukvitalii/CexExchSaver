@@ -7,12 +7,14 @@ import { ConfigService } from '@nestjs/config';
 import { DatabaseService } from 'src/database/database.service';
 import { priceRecord } from 'src/database/priceRecord.model';
 import fs from 'fs';
+import { reactService } from './react.service';
 
 @Controller('graph')
 export class graphController {
   constructor(
     private readonly db: DatabaseService,
     private readonly cexApi: SaverService,
+    private readonly reactHelepr: reactService,
   ) {}
 
   @Get(':startData/:endData/:step')
@@ -27,7 +29,7 @@ export class graphController {
       new Date(startData),
       new Date(endData),
     );
-    const stepNumber: number = this.cexApi.convertIntervalToStep(step);
+    const stepNumber: number = this.reactHelepr.convertIntervalToStep(step);
     const filteredRecords = records.filter(
       (rec) => rec.dataValues.symbol === 'EUR/USDT',
     );

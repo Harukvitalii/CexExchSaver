@@ -14,6 +14,8 @@ import { MyConfigModule } from './configuration/config.module';
 import { EventEmitterModule } from '@nestjs/event-emitter';
 import { DatabaseService } from './database/database.service';
 import { graphController } from './react.endp/graph..controller';
+import { reactService } from './react.endp/react.service';
+import { tableController } from './react.endp/table.controller';
 // import { RedisCacheModule } from './redis/redis.module';
 // import { RedisCacheService } from './redis/redis.service';
 
@@ -43,13 +45,19 @@ import { graphController } from './react.endp/graph..controller';
     ScheduleModule.forRoot(),
     EventEmitterModule.forRoot(),
   ],
-  controllers: [AppController, TaskController, graphController],
+  controllers: [
+    AppController,
+    TaskController,
+    graphController,
+    tableController,
+  ],
   providers: [
     AppService,
     ConfigService,
     BackgroundService,
     SaverService,
     DatabaseService,
+    reactService,
     // RedisCacheService,
   ],
 })

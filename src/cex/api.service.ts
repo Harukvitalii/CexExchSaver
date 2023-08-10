@@ -3,7 +3,7 @@ import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 // import axios from 'axios';
 import * as ccxt from 'ccxt';
-import { ExchangeFees, pairToSubDict, stepIntervals } from './cex.interface';
+import { ExchangeFees, pairToSubDict } from './cex.interface';
 import { DatabaseService } from 'src/database/database.service';
 import { priceRecord } from 'src/database/priceRecord.model';
 import { v4 as uuidv4 } from 'uuid'
@@ -189,21 +189,7 @@ export class SaverService {
     await new Promise((resolve) => setTimeout(resolve, seconds * 1000));
   }
 
-  convertIntervalToStep(interval) {
-    const match = interval.match(/^(\d+)\s*(\w+)$/);
-    if (match) {
-      const quantity = parseInt(match[1]);
-      const unit = match[2].toLowerCase();
-      if (unit === 'seconds' || unit === 'second') {
-        return 1;
-      }
-      const multiplier = stepIntervals[unit];
-      if (multiplier) {
-        return multiplier * quantity;
-      }
-    }
-    return null; // Invalid interval
-  }
+
 
 
 }
