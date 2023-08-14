@@ -10,7 +10,6 @@ import fs from 'fs';
 import { reactService } from './react.service';
 import { tableRecord } from './react.interface';
 
-
 @Controller('table')
 export class tableController {
   constructor(

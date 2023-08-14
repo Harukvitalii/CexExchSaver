@@ -21,7 +21,6 @@ export class BackgroundService {
   async onApplicationBootstrap() {
     console.log('start events');
     // this.eventEmitter.emit('start_exchange_motinoring');
-    this.eventEmitter.emit('start_graph');
   }
 
   @OnEvent('start_exchange_motinoring')
@@ -48,40 +47,11 @@ export class BackgroundService {
         );
       } catch (e) {
         console.log('error when init exchanges');
-        this.cctxBulk.sleep(10);
+        this.cctxBulk.sleep(5);
       }
     }
   }
-  @OnEvent('start_graph')
-  async startGraph() {
-    const startData = new Date('2023-07-30T10:13:41.977Z');
-    const endData = new Date('2023-07-30T10:14:41.977Z');
-    // const records: priceRecord[] = await this.db.loadRecords();
-    const records: priceRecord[] = await this.db.loadRecordsBetweenData(
-      startData,
-      endData,
-    );
-    const filteredRecords = records.filter(
-      (rec) => rec.dataValues.symbol === 'EUR/USDT',
-    );
-    const recordsByGroup = new Map<string, priceRecord[]>();
-    for (const rec of filteredRecords.slice(0, 9)) {
-      const groupHash = rec.dataValues.groupHash;
-      if (recordsByGroup.has(groupHash)) {
-        recordsByGroup.get(groupHash).push(rec);
-      } else {
-        recordsByGroup.set(groupHash, [rec]);
-      }
-    }
-    // console.log(recordsByGroup);
-    for (const recs of recordsByGroup.values()) {
-      const result = recs.map((priceRecord) => ({
-        exchange: priceRecord.dataValues.exchange,
-        addedAt: new Date(parseInt(priceRecord.dataValues.timeAdded, 10)),
-        price: priceRecord.dataValues.price,
-      }));
-      // console.log(result);
-    }
+  
     // async getPriceExchangeInfo() {
     //   console.log(new Date());
     //   const prices = await this.redis.get('exchnage-prices');
