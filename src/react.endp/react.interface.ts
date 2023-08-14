@@ -7,3 +7,18 @@ export const stepIntervals = {
   day: 120 * 24,
   days: 120 * 24,
 };
+export interface graphRecord {
+  datetime: string;
+  whitebitPrice: number;
+  bitstampPrice: number;
+  krakenPrice: number;
+  diffWhiteBitstamp: string;
+  diffWhiteKraken: string;
+}
+
+export interface tableRecord {
+  datetime: string;
+  whitebitPrice: number;
+  toExchangePrice: number;
+  difference: string;
+}

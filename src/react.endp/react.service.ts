@@ -3,9 +3,8 @@ import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 // import axios from 'axios';
 import { DatabaseService } from 'src/database/database.service';
-import { stepIntervals } from './react.interface';
+import { graphRecord, stepIntervals, tableRecord } from './react.interface';
 import { priceRecord } from 'src/database/priceRecord.model';
-import { tableRecord } from 'src/cex/cex.interface';
 
 
 
@@ -33,30 +32,13 @@ export class reactService {
     return null; // Invalid interval
   }
 
-  filterRecords(toExchange: string, records: priceRecord[], stepNumber: number) {
+  filterRecords(toExchange: string, records: priceRecord[], stepNumber: number, symbol = 'EUR/USDT') {
     const digitsAfterDot = Number(process.env.digitsAfterDotInTable)
     const filteredRecords = records.filter(
-        (rec) => rec.dataValues.symbol === 'EUR/USDT',
+        (rec) => rec.dataValues.symbol === symbol,
       );
-      const recordsByGroup = new Map<string, priceRecord[]>();
-      for (const rec of filteredRecords) {
-        const groupHash = rec.dataValues.groupHash;
-        if (recordsByGroup.has(groupHash)) {
-          recordsByGroup.get(groupHash).push(rec);
-        } else {
-          recordsByGroup.set(groupHash, [rec]);
-        }
-      }
-      // console.log(recordsByGroup);
-      const GroupGraphData = [];
-      for (const recs of recordsByGroup.values()) {
-        const result = recs.map((priceRecord) => ({
-          exchange: priceRecord.dataValues.exchange,
-          addedAt: new Date(parseInt(priceRecord.dataValues.timeAdded, 10)),
-          price: priceRecord.dataValues.price,
-        }));
-        GroupGraphData.push(result);
-      }
+      const GroupGraphData = this.groupRecords(filteredRecords)
+
       const filteredByStepRecords = GroupGraphData.filter(
           (record, index) => index % stepNumber === 0,
         );
@@ -69,6 +51,58 @@ export class reactService {
             TableRecords.push({datetime: whitebitRec.addedAt, whitebitPrice: whitebitRec.price.toFixed(digitsAfterDot), toExchangePrice: toExchangeRec.price.toFixed(digitsAfterDot), difference: difference.toFixed(digitsAfterDot)})
         }
         return TableRecords
+  }
+  filterRecordsGraph(records: priceRecord[], stepNumber: number, symbol = 'EUR/USDT') {
+    const digitsAfterDot = Number(process.env.digitsAfterDotInTable)
+    const filteredRecords = records.filter(
+        (rec) => rec.dataValues.symbol === symbol,
+      );
+      const GroupGraphData = this.groupRecords(filteredRecords)
+      
+      const filteredByStepRecords = GroupGraphData.filter(
+          (record, index) => index % stepNumber === 0,
+        );
+        
+        const TableRecords: graphRecord[] = []
+        for (const records of filteredByStepRecords) { 
+            const whitebitRec = records.filter(info => info.exchange === 'whitebit')[0];
+            const bitstampRec = records.filter(info => info.exchange === "bitstamp")[0];
+            const krakenRec   = records.filter(info => info.exchange === "kraken")[0];
+            const differenceWhiteBitstamp: number = this.calculatePercentageDifference(whitebitRec.price, bitstampRec.price);
+            const differenceWhiteKraken: number = this.calculatePercentageDifference(whitebitRec.price, krakenRec.price);
+            TableRecords.push({
+              datetime: whitebitRec.addedAt,
+              whitebitPrice: whitebitRec.price.toFixed(digitsAfterDot),
+              bitstampPrice: bitstampRec.price.toFixed(digitsAfterDot),
+              krakenPrice: krakenRec.price.toFixed(digitsAfterDot),
+              diffWhiteBitstamp: differenceWhiteBitstamp.toFixed(digitsAfterDot),
+              diffWhiteKraken: differenceWhiteKraken.toFixed(digitsAfterDot)
+            })
+        }
+        return TableRecords
+  }
+
+  groupRecords(records: priceRecord[]) {
+    const recordsByGroup = new Map<string, priceRecord[]>();
+    for (const rec of records) {
+      const groupHash = rec.dataValues.groupHash;
+      if (recordsByGroup.has(groupHash)) {
+        recordsByGroup.get(groupHash).push(rec);
+      } else {
+        recordsByGroup.set(groupHash, [rec]);
+      }
+    }
+    // console.log(recordsByGroup);
+    const GroupGraphData = [];
+    for (const recs of recordsByGroup.values()) {
+      const result = recs.map((priceRecord) => ({
+        exchange: priceRecord.dataValues.exchange,
+        addedAt: new Date(parseInt(priceRecord.dataValues.timeAdded, 10)),
+        price: priceRecord.dataValues.price,
+      }));
+      GroupGraphData.push(result);
+    }
+    return GroupGraphData
   }
 
   calculatePercentageDifference(oldValue: number, newValue: number): number {

@@ -8,6 +8,7 @@ import { DatabaseService } from 'src/database/database.service';
 import { priceRecord } from 'src/database/priceRecord.model';
 import fs from 'fs';
 import { reactService } from './react.service';
+import { graphRecord } from './react.interface';
 
 @Controller('graph')
 export class graphController {
@@ -30,32 +31,12 @@ export class graphController {
       new Date(endData),
     );
     const stepNumber: number = this.reactHelepr.convertIntervalToStep(step);
-    const filteredRecords = records.filter(
-      (rec) => rec.dataValues.symbol === 'EUR/USDT',
+    const GraphRecords: graphRecord[] = this.reactHelepr.filterRecordsGraph(
+      records,
+      stepNumber,
+      'EUR/USDT',
     );
-    const recordsByGroup = new Map<string, priceRecord[]>();
-    for (const rec of filteredRecords) {
-      const groupHash = rec.dataValues.groupHash;
-      if (recordsByGroup.has(groupHash)) {
-        recordsByGroup.get(groupHash).push(rec);
-      } else {
-        recordsByGroup.set(groupHash, [rec]);
-      }
-    }
-    // console.log(recordsByGroup);
-    const GroupGraphData = [];
-    for (const recs of recordsByGroup.values()) {
-      const result = recs.map((priceRecord) => ({
-        exchange: priceRecord.dataValues.exchange,
-        addedAt: new Date(parseInt(priceRecord.dataValues.timeAdded, 10)),
-        price: priceRecord.dataValues.price,
-      }));
-      GroupGraphData.push(result);
-    }
-    const result = GroupGraphData.filter(
-      (record, index) => index % stepNumber === 0,
-    );
-    return result;
+    return GraphRecords;
     // async getPriceExchangeInfo() {
     //   console.log(new Date());
     //   const prices = await this.redis.get('exchnage-prices');

@@ -8,7 +8,8 @@ import { DatabaseService } from 'src/database/database.service';
 import { priceRecord } from 'src/database/priceRecord.model';
 import fs from 'fs';
 import { reactService } from './react.service';
-import { tableRecord } from 'src/cex/cex.interface';
+import { tableRecord } from './react.interface';
+
 
 @Controller('table')
 export class tableController {
@@ -50,8 +51,8 @@ export class tableController {
       sortField,
       sortType,
     );
-    console.log(sortedTableRecords.slice(0, 5));
-    console.log(toExchange);
-    return sortedTableRecords;
+    // console.log(sortedTableRecords.slice(0, 5));
+    // console.log(toExchange);
+    return sortedTableRecords.slice(0, 300);
   }
 }

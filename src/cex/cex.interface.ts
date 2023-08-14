@@ -17,9 +17,6 @@ export interface cexPairs {
   [name: string]: Record<string, Record<string, number>>;
 }
 
-export interface tableRecord {
-  datetime: string;
-  whitebitPrice: number;
-  toExchangePrice: number;
-  difference: string;
-}
+
+
+
