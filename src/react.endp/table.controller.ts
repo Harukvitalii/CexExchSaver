@@ -50,7 +50,7 @@ export class tableController {
       sortField,
       sortType,
     );
-    // console.log(sortedTableRecords.slice(0, 5));
+    console.log(sortedTableRecords.slice(0, 5));
     // console.log(toExchange);
     return sortedTableRecords.slice(0, 300);
   }
