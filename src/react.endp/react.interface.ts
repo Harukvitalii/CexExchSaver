@@ -7,7 +7,7 @@ export const stepIntervals = {
   day: 120 * 24,
   days: 120 * 24,
 };
-export interface graphRecord {
+export interface calculatedRecord {
   datetime: string;
   whitebitPrice: number;
   bitstampPrice: number;

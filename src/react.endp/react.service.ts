@@ -3,7 +3,7 @@ import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 // import axios from 'axios';
 import { DatabaseService } from 'src/database/database.service';
-import { graphRecord, stepIntervals, tableRecord } from './react.interface';
+import { calculatedRecord, stepIntervals, tableRecord } from './react.interface';
 import { priceRecord } from 'src/database/priceRecord.model';
 
 
@@ -63,7 +63,7 @@ export class reactService {
           (record, index) => index % stepNumber === 0,
         );
         
-        const TableRecords: graphRecord[] = []
+        const TableRecords: calculatedRecord[] = []
         for (const records of filteredByStepRecords) { 
             const whitebitRec = records.filter(info => info.exchange === 'whitebit')[0];
             const bitstampRec = records.filter(info => info.exchange === "bitstamp")[0];
@@ -111,10 +111,10 @@ export class reactService {
     return percentageDifference;
   }
   sortByProperty(
-    array: tableRecord[],
-    property: keyof tableRecord,
+    array: calculatedRecord[],
+    property: keyof calculatedRecord,
     direction: "asc" | "desc" = "asc"
-  ): tableRecord[] {
+  ): calculatedRecord[] {
     // console.log('array' , array)
     const sortedArray = [...array];
 

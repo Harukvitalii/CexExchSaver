@@ -8,7 +8,7 @@ import { DatabaseService } from 'src/database/database.service';
 import { priceRecord } from 'src/database/priceRecord.model';
 import fs from 'fs';
 import { reactService } from './react.service';
-import { tableRecord } from './react.interface';
+import { calculatedRecord, tableRecord } from './react.interface';
 
 @Controller('table')
 export class tableController {
@@ -18,13 +18,12 @@ export class tableController {
     private readonly reactHelper: reactService,
   ) {}
 
-  @Get(':startData/:endData/:step/:sortby/:exchange')
+  @Get(':startData/:endData/:step/:sortby')
   async startGraph(
     @Param('startData') startData: string,
     @Param('endData') endData: string,
     @Param('step') step: string,
     @Param('sortby') sort: string,
-    @Param('exchange') toExchange: string,
   ) {
     console.log(startData, endData);
     // const records: priceRecord[] = await this.db.loadRecords();
@@ -34,15 +33,12 @@ export class tableController {
     );
     const stepNumber: number = this.reactHelper.convertIntervalToStep(step);
 
-    const filteredRecords: tableRecord[] = this.reactHelper.filterRecords(
-      toExchange,
-      records,
-      stepNumber,
-    );
+    const filteredRecords: calculatedRecord[] =
+      this.reactHelper.filterRecordsGraph(records, stepNumber, 'EUR/USDT');
     // console.log(filteredRecords.slice(0, 10));
 
     const [sortField, sortType] = sort.split(' ') as [
-      keyof tableRecord,
+      keyof calculatedRecord,
       'asc' | 'desc',
     ];
     const sortedTableRecords = this.reactHelper.sortByProperty(

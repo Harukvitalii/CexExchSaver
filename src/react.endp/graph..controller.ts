@@ -8,7 +8,7 @@ import { DatabaseService } from 'src/database/database.service';
 import { priceRecord } from 'src/database/priceRecord.model';
 import fs from 'fs';
 import { reactService } from './react.service';
-import { graphRecord } from './react.interface';
+import { calculatedRecord } from './react.interface';
 
 @Controller('graph')
 export class graphController {
@@ -31,12 +31,9 @@ export class graphController {
       new Date(endData),
     );
     const stepNumber: number = this.reactHelepr.convertIntervalToStep(step);
-    const GraphRecords: graphRecord[] = this.reactHelepr.filterRecordsGraph(
-      records,
-      stepNumber,
-      'EUR/USDT',
-    );
-    return GraphRecords;
+    const calculatedRecords: calculatedRecord[] =
+      this.reactHelepr.filterRecordsGraph(records, stepNumber, 'EUR/USDT');
+    return calculatedRecords;
     // async getPriceExchangeInfo() {
     //   console.log(new Date());
     //   const prices = await this.redis.get('exchnage-prices');
