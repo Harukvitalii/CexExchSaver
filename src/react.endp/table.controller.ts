@@ -50,4 +50,16 @@ export class tableController {
     // console.log(toExchange);
     return sortedTableRecords.slice(0, 300);
   }
+
+  @Get('/single')
+  async SingleRecordPage() {
+    console.log();
+    // const records: priceRecord[] = await this.db.loadRecords();
+    const records: priceRecord[] = await this.db.loadLastRecord();
+    const filteredRecords: calculatedRecord[] =
+      this.reactHelper.filterRecordsGraph(records, 1, 'EUR/USDT');
+
+    // console.log(toExchange);
+    return filteredRecords[0];
+  }
 }

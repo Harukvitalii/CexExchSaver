@@ -65,6 +65,7 @@ export class reactService {
         
         const TableRecords: calculatedRecord[] = []
         for (const records of filteredByStepRecords) { 
+          try {
             const whitebitRec = records.filter(info => info.exchange === 'whitebit')[0];
             const bitstampRec = records.filter(info => info.exchange === "bitstamp")[0];
             const krakenRec   = records.filter(info => info.exchange === "kraken")[0];
@@ -78,6 +79,9 @@ export class reactService {
               diffWhiteBitstamp: differenceWhiteBitstamp.toFixed(digitsAfterDot),
               diffWhiteKraken: differenceWhiteKraken.toFixed(digitsAfterDot)
             })
+          } catch (e) {
+            console.log('not all data was loaded')
+          }
         }
         return TableRecords
   }

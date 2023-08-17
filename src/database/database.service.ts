@@ -55,4 +55,21 @@ export class DatabaseService {
       throw error;
     }
   }
+  async loadLastRecord(): Promise<priceRecord[]> {
+    const maxRecords: number =
+      JSON.parse(process.env.ALLOWED_PAIRS).length *
+      4 *
+      JSON.parse(process.env.ALLOWED_EXCHANGES).length;
+    console.log('max records', maxRecords);
+    try {
+      const records = await this.recordModel.findAll({
+        order: [['createdAt', 'DESC']],
+        limit: maxRecords,
+      });
+      return records;
+    } catch (error) {
+      console.log(`error loading records, err: ${error.name}`);
+      throw error;
+    }
+  }
 }
