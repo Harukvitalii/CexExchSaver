@@ -6,7 +6,7 @@ import { ReactService } from './react.service';
 import { calculatedRecord, graphQuery } from './react.interface';
 
 @Controller('graph')
-export class graphController {
+export class GraphController {
   constructor(
     private readonly db: DatabaseService,
     private readonly cexApi: SaverService,

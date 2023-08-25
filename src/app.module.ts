@@ -13,7 +13,7 @@ import { SaverService } from './cex/api.service';
 import { MyConfigModule } from './configuration/config.module';
 import { EventEmitterModule } from '@nestjs/event-emitter';
 import { DatabaseService } from './database/database.service';
-import { graphController } from './react.endp/graph.controller';
+import { GraphController } from './react.endp/graph.controller';
 import { ReactService } from './react.endp/react.service';
 import { tableController } from './react.endp/table.controller';
 // import { RedisCacheModule } from './redis/redis.module';
@@ -48,7 +48,7 @@ import { tableController } from './react.endp/table.controller';
   controllers: [
     AppController,
     TaskController,
-    graphController,
+    GraphController,
     tableController,
   ],
   providers: [
