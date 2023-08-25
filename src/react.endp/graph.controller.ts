@@ -10,13 +10,13 @@ export class graphController {
   constructor(
     private readonly db: DatabaseService,
     private readonly cexApi: SaverService,
-    private readonly reactHelepr: ReactService,
+    private readonly reactHelper: ReactService,
   ) {}
 
   @Get(':startData/:endData/:step')
   async startGraph(
     @Query('graphQuery') graphQuery: graphQuery,
   ): Promise<calculatedRecord[]> {
-    return this.reactHelepr.loadGraphRecords(graphQuery);
+    return this.reactHelper.loadGraphRecords(graphQuery);
   }
 }

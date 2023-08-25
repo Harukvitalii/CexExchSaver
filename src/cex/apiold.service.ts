@@ -70,19 +70,19 @@ export class SaverServiceOld {
     try { 
       const pairsToSubscribe = exchange.symbols.filter(symbol => this.pairs.includes(symbol));
       console.log("symb to subscribe", pairsToSubscribe)
-      await Promise.all(pairsToSubscribe.map(symbol => this.startSymoblListener(exchange, symbol)))
+      await Promise.all(pairsToSubscribe.map(symbol => this.startSymbolListener(exchange, symbol)))
     } catch (e) { 
       console.log('error startOrderBookListener')
     }
   }
       
-  async startSymoblListener(exchange: ccxt.Exchange, symbol: string) { 
+  async startSymbolListener(exchange: ccxt.Exchange, symbol: string) { 
       while (true) { 
         try { 
           const orderbook = await exchange.watchOrderBook(symbol)
           await this.handleWS_symbol(exchange, symbol, orderbook)
         } catch (e) { 
-          console.log('error startSymoblListener',symbol, e)
+          console.log('error startSymbolListener',symbol, e)
         }
       }
     }

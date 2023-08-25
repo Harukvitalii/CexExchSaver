@@ -51,7 +51,7 @@ export class SaverService {
   }
 
 
-  async startChekingPairs(exchanges: ccxt.Exchange[]) { 
+  async startCheckingPairs(exchanges: ccxt.Exchange[]) { 
     // check and save if pairs is reverse
     try { 
       const pairsToSubscribeExs: pairToSubDict = {}
@@ -67,9 +67,9 @@ export class SaverService {
             pairsToSubscribeExs[symbol][exchange.id] = {"reverse": false}
           }
           else if (REVERSED_PAIRS.includes(symbol)) { 
-            const [base, quaote] = symbol.split('/')
-            pairsToSubscribeExs[`${quaote}/${base}`] ??= {};
-            pairsToSubscribeExs[`${quaote}/${base}`][exchange.id] = {"reverse": true}
+            const [base, quote] = symbol.split('/')
+            pairsToSubscribeExs[`${quote}/${base}`] ??= {};
+            pairsToSubscribeExs[`${quote}/${base}`][exchange.id] = {"reverse": true}
           }
         }
       }
@@ -78,9 +78,9 @@ export class SaverService {
       // const pairsToSub = this.getMatchingPairs(pairsToSubscribeExs)
       // const pairsToSub = this.pairs;
       // loop one pair printing difference on exchanges
-      await Promise.all(this.pairs.map(pair => this.startSymoblLoop(exchanges, pair, pairsToSubscribeExs)))
+      await Promise.all(this.pairs.map(pair => this.startSymbolLoop(exchanges, pair, pairsToSubscribeExs)))
     } catch (e) { 
-      console.log('error startChekingPairs', e)
+      console.log('error startCheckingPairs', e)
     }
   }
 
@@ -99,15 +99,15 @@ export class SaverService {
   
       
   
-  async startSymoblLoop(exchanges: ccxt.Exchange[], pair: string, pairsToSub: pairToSubDict) { 
+  async startSymbolLoop(exchanges: ccxt.Exchange[], pair: string, pairsToSub: pairToSubDict) { 
       console.log(`Starting loop ${pair}`)
       while (true) { 
         try { 
-          const [base, quaote] = pair.split('/')
-          //create pormises for orderbook load
+          const [base, quote] = pair.split('/')
+          //create promises for orderbook load
           const orderBookPromises = exchanges.map(exchange => {
             if (pairsToSub[pair][exchange.id].reverse) {
-              return exchange.fetchOrderBook(`${quaote}/${base}`)
+              return exchange.fetchOrderBook(`${quote}/${base}`)
             }
             else { 
               return exchange.fetchOrderBook(pair)
@@ -136,7 +136,7 @@ export class SaverService {
             }
             orderBookresults.push([bid, ask, exchange.id]);
             const pr1 = this.createPriceRecord(exchange.id, pair, bid, groupHash)
-            const pr2 = this.createPriceRecord(exchange.id, `${quaote}/${base}`, ask, groupHash)
+            const pr2 = this.createPriceRecord(exchange.id, `${quote}/${base}`, ask, groupHash)
             Promise.all([pr1, pr2])
 
           });
@@ -150,13 +150,13 @@ export class SaverService {
           const result = `
           pair ${pair}
           ------------- ${exchanges[0].id} -------------------- ${exchanges[1].id} ------------------  ${exchanges[2].id}
-          ${base} -> ${quaote} price ${orderBookresults[0][0].toFixed(5)} USDT\t${orderBookresults[1][0].toFixed(5)} USDT (${Differ1Ex2Ex[0] >= 0 ? '+' : ''}${Differ1Ex2Ex[0].toFixed(3)}%)\t ${orderBookresults[2][0].toFixed(5)} USDT (${Differ1Ex3Ex[0] >= 0 ? '+' : ''}${Differ1Ex3Ex[0].toFixed(3)}%)
-          ${quaote} -> ${base} price ${orderBookresults[0][1].toFixed(5)} USDT\t${orderBookresults[1][1].toFixed(5)} USDT (${Differ1Ex2Ex[1] >= 0 ? '+' : ''}${Differ1Ex2Ex[1].toFixed(3)}%)\t ${orderBookresults[2][1].toFixed(5)} USDT (${Differ1Ex3Ex[1] >= 0 ? '+' : ''}${Differ1Ex3Ex[1].toFixed(3)}%)
+          ${base} -> ${quote} price ${orderBookresults[0][0].toFixed(5)} USDT\t${orderBookresults[1][0].toFixed(5)} USDT (${Differ1Ex2Ex[0] >= 0 ? '+' : ''}${Differ1Ex2Ex[0].toFixed(3)}%)\t ${orderBookresults[2][0].toFixed(5)} USDT (${Differ1Ex3Ex[0] >= 0 ? '+' : ''}${Differ1Ex3Ex[0].toFixed(3)}%)
+          ${quote} -> ${base} price ${orderBookresults[0][1].toFixed(5)} USDT\t${orderBookresults[1][1].toFixed(5)} USDT (${Differ1Ex2Ex[1] >= 0 ? '+' : ''}${Differ1Ex2Ex[1].toFixed(3)}%)\t ${orderBookresults[2][1].toFixed(5)} USDT (${Differ1Ex3Ex[1] >= 0 ? '+' : ''}${Differ1Ex3Ex[1].toFixed(3)}%)
           `;
           console.log(result)
           await this.sleep(this.configService.get<number>("INTERVAL_SLEEP_RESULT"))
         } catch (e) { 
-          console.log('error startSymoblLoop',pair, e)
+          console.log('error startSymbolLoop',pair, e)
           await this.sleep(3)
         }
       }

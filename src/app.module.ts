@@ -56,6 +56,7 @@ import { tableController } from './react.endp/table.controller';
     ConfigService,
     SaverService,
     DatabaseService,
+    BackgroundService,
     ReactService,
     // RedisCacheService,
   ],
