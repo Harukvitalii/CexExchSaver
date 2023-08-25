@@ -3,13 +3,13 @@ import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 // import axios from 'axios';
 import { DatabaseService } from 'src/database/database.service';
-import { calculatedRecord, stepIntervals, tableRecord } from './react.interface';
+import { calculatedRecord, graphQuery, stepIntervals, tableQuery, tableRecord } from './react.interface';
 import { priceRecord } from 'src/database/priceRecord.model';
 
 
 
 @Injectable()
-export class reactService {
+export class ReactService {
 
   constructor(
     private readonly configService: ConfigService,
@@ -150,5 +150,60 @@ export class reactService {
   
     return sortedArray;
   }
+  async singleRecordTable(): Promise<calculatedRecord> {
+    const records: priceRecord[] = await this.db.loadLastRecord();
+    const filteredRecords: calculatedRecord[] =
+      this.filterRecordsGraph(records, 1, 'EUR/USDT');
 
+    // console.log(toExchange);
+    return filteredRecords[0];
+  }
+
+
+
+
+  async loadTableRecords(tableQuery: tableQuery): Promise<calculatedRecord[]> {
+    console.log(tableQuery.startData, tableQuery.endData);
+    // const records: priceRecord[] = await this.db.loadRecords();
+    const records: priceRecord[] = await this.db.loadRecordsBetweenData(
+      new Date(tableQuery.startData),
+      new Date(tableQuery.endData),
+    );
+    const stepNumber: number = this.convertIntervalToStep(
+      tableQuery.step,
+    );
+
+    const filteredRecords: calculatedRecord[] =
+      this.filterRecordsGraph(records, stepNumber, 'EUR/USDT');
+    // console.log(filteredRecords.slice(0, 10));
+
+    const [sortField, sortType] = tableQuery.sort.split(' ') as [
+      keyof calculatedRecord,
+      'asc' | 'desc',
+    ];
+    const sortedTableRecords = this.sortByProperty(
+      filteredRecords,
+      sortField,
+      sortType,
+    );
+    console.log(sortedTableRecords.slice(0, 5));
+    // console.log(toExchange);
+    return sortedTableRecords.slice(0, 300);
+  }
+
+
+  async loadGraphRecords(graphQuery: graphQuery): Promise<calculatedRecord[]> {
+    console.log(graphQuery.startData, graphQuery.endData);
+    // const records: priceRecord[] = await this.db.loadRecords();
+    const records: priceRecord[] = await this.db.loadRecordsBetweenData(
+      new Date(graphQuery.startData),
+      new Date(graphQuery.endData),
+    );
+    const stepNumber: number = this.convertIntervalToStep(
+      graphQuery.step,
+    );
+    const calculatedRecords: calculatedRecord[] =
+      this.filterRecordsGraph(records, stepNumber, 'EUR/USDT');
+    return calculatedRecords;
+  }
 }

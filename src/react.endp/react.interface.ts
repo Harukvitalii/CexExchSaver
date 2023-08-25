@@ -22,3 +22,16 @@ export interface tableRecord {
   toExchangePrice: number;
   difference: string;
 }
+
+export interface graphQuery {
+  startData: string;
+  endData: string;
+  step: string;
+}
+
+export interface tableQuery {
+  startData: string;
+  endData: string;
+  step: string;
+  sort: string;
+}

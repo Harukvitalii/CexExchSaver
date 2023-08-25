@@ -7,59 +7,26 @@ import { ConfigService } from '@nestjs/config';
 import { DatabaseService } from 'src/database/database.service';
 import { priceRecord } from 'src/database/priceRecord.model';
 import fs from 'fs';
-import { reactService } from './react.service';
-import { calculatedRecord, tableRecord } from './react.interface';
+import { ReactService } from './react.service';
+import { calculatedRecord, tableQuery, tableRecord } from './react.interface';
 
 @Controller('table')
 export class tableController {
   constructor(
     private readonly db: DatabaseService,
     private readonly cexApi: SaverService,
-    private readonly reactHelper: reactService,
+    private readonly reactHelper: ReactService,
   ) {}
 
   @Get(':startData/:endData/:step/:sortby')
-  async startGraph(
-    @Param('startData') startData: string,
-    @Param('endData') endData: string,
-    @Param('step') step: string,
-    @Param('sortby') sort: string,
-  ) {
-    console.log(startData, endData);
-    // const records: priceRecord[] = await this.db.loadRecords();
-    const records: priceRecord[] = await this.db.loadRecordsBetweenData(
-      new Date(startData),
-      new Date(endData),
-    );
-    const stepNumber: number = this.reactHelper.convertIntervalToStep(step);
-
-    const filteredRecords: calculatedRecord[] =
-      this.reactHelper.filterRecordsGraph(records, stepNumber, 'EUR/USDT');
-    // console.log(filteredRecords.slice(0, 10));
-
-    const [sortField, sortType] = sort.split(' ') as [
-      keyof calculatedRecord,
-      'asc' | 'desc',
-    ];
-    const sortedTableRecords = this.reactHelper.sortByProperty(
-      filteredRecords,
-      sortField,
-      sortType,
-    );
-    console.log(sortedTableRecords.slice(0, 5));
-    // console.log(toExchange);
-    return sortedTableRecords.slice(0, 300);
+  async startTable(
+    @Query('tableQuery') tableQuery: tableQuery,
+  ): Promise<calculatedRecord[]> {
+    return this.reactHelper.loadTableRecords(tableQuery);
   }
 
   @Get('/single')
-  async SingleRecordPage() {
-    console.log();
-    // const records: priceRecord[] = await this.db.loadRecords();
-    const records: priceRecord[] = await this.db.loadLastRecord();
-    const filteredRecords: calculatedRecord[] =
-      this.reactHelper.filterRecordsGraph(records, 1, 'EUR/USDT');
-
-    // console.log(toExchange);
-    return filteredRecords[0];
+  async SingleRecordPage(): Promise<calculatedRecord> {
+    return this.reactHelper.singleRecordTable();
   }
 }

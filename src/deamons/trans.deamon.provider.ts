@@ -20,10 +20,9 @@ export class BackgroundService {
   ) {}
   async onApplicationBootstrap() {
     console.log('start events');
-    this.eventEmitter.emit('start_exchange_motinoring');
+    this.startWS;
   }
 
-  @OnEvent('start_exchange_motinoring')
   async startWS() {
     while (true) {
       try {
