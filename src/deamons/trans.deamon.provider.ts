@@ -20,7 +20,7 @@ export class BackgroundService {
   ) {}
   async onApplicationBootstrap() {
     console.log('start events');
-    this.startWS;
+    this.startWS();
   }
 
   async startWS() {

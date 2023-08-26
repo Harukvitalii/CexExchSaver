@@ -1,4 +1,4 @@
-import { Controller, Get, Query } from '@nestjs/common';
+import { Controller, Get, Param, Query } from '@nestjs/common';
 import { SaverService } from 'src/cex/services/api.service';
 import { DatabaseService } from 'src/database/database.service';
 
@@ -13,9 +13,9 @@ export class GraphController {
     private readonly reactHelper: ReactService,
   ) {}
 
-  @Get(':startData/:endData/:step')
+  @Get('/:startData/:endData/:step/:mainExchange')
   async startGraph(
-    @Query('graphQuery') graphQuery: graphQuery,
+    @Param() graphQuery: graphQuery,
   ): Promise<calculatedRecord[]> {
     return this.reactHelper.loadGraphRecords(graphQuery);
   }

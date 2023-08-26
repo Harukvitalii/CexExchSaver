@@ -12,8 +12,9 @@ export interface calculatedRecord {
   whitebitPrice: number;
   bitstampPrice: number;
   krakenPrice: number;
-  diffWhiteBitstamp: string;
-  diffWhiteKraken: string;
+  diffMainBitstamp: string;
+  diffMainKraken: string;
+  diffMainWhitebit: string;
 }
 
 export interface tableRecord {
@@ -27,6 +28,7 @@ export interface graphQuery {
   startData: string;
   endData: string;
   step: string;
+  mainExchange: string;
 }
 
 export interface tableQuery {
@@ -34,4 +36,5 @@ export interface tableQuery {
   endData: string;
   step: string;
   sort: string;
+  mainExchange: string;
 }

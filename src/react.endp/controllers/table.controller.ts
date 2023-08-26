@@ -22,15 +22,18 @@ export class tableController {
     private readonly reactHelper: ReactService,
   ) {}
 
-  @Get(':startData/:endData/:step/:sortby')
+  @Get('/:startData/:endData/:step/:sort/:mainExchange')
   async startTable(
-    @Query('tableQuery') tableQuery: tableQuery,
+    @Param() tableQuery: tableQuery,
   ): Promise<calculatedRecord[]> {
+    console.log(tableQuery);
     return this.reactHelper.loadTableRecords(tableQuery);
   }
 
-  @Get('/single')
-  async SingleRecordPage(): Promise<calculatedRecord> {
-    return this.reactHelper.singleRecordTable();
+  @Get('/single/:mainExchange')
+  async SingleRecordPage(
+    @Param() params: { mainExchange: string },
+  ): Promise<calculatedRecord> {
+    return this.reactHelper.singleRecordTable(params.mainExchange);
   }
 }

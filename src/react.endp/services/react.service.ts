@@ -52,7 +52,7 @@ export class ReactService {
         }
         return TableRecords
   }
-  filterRecordsGraph(records: priceRecord[], stepNumber: number, symbol = 'EUR/USDT') {
+  filterRecordsGraph(records: priceRecord[], stepNumber: number, symbol = 'EUR/USDT', mainExchange: string) {
     const digitsAfterDot = Number(process.env.digitsAfterDotInTable)
     const filteredRecords = records.filter(
         (rec) => rec.dataValues.symbol === symbol,
@@ -69,15 +69,28 @@ export class ReactService {
             const whitebitRec = records.filter(info => info.exchange === 'whitebit')[0];
             const bitstampRec = records.filter(info => info.exchange === "bitstamp")[0];
             const krakenRec   = records.filter(info => info.exchange === "kraken")[0];
-            const differenceWhiteBitstamp: number = this.calculatePercentageDifference(whitebitRec.price, bitstampRec.price);
-            const differenceWhiteKraken: number = this.calculatePercentageDifference(whitebitRec.price, krakenRec.price);
+
+            let [differenceMainBitstamp, differenceMainKraken, differenceMainWhitebit] = [0, 0, 0]
+            if (mainExchange === 'whitebit') {
+              differenceMainBitstamp = this.calculatePercentageDifference(whitebitRec.price, bitstampRec.price);
+              differenceMainKraken = this.calculatePercentageDifference(whitebitRec.price, krakenRec.price);
+              // differenceMainWhitebit = 0
+            } else if (mainExchange === 'kraken') {
+              differenceMainBitstamp = this.calculatePercentageDifference(krakenRec.price, bitstampRec.price);
+              // differenceMainKraken = 0
+              differenceMainWhitebit = this.calculatePercentageDifference(krakenRec.price, whitebitRec.price);
+            } else if (mainExchange === 'bitstamp') {
+              differenceMainWhitebit = this.calculatePercentageDifference(bitstampRec.price, whitebitRec.price);
+              differenceMainKraken = this.calculatePercentageDifference(bitstampRec.price, krakenRec.price);
+            }
             TableRecords.push({
-              datetime: whitebitRec.addedAt,
+              datetime: krakenRec.addedAt,
               whitebitPrice: whitebitRec.price.toFixed(digitsAfterDot),
               bitstampPrice: bitstampRec.price.toFixed(digitsAfterDot),
               krakenPrice: krakenRec.price.toFixed(digitsAfterDot),
-              diffWhiteBitstamp: differenceWhiteBitstamp.toFixed(digitsAfterDot),
-              diffWhiteKraken: differenceWhiteKraken.toFixed(digitsAfterDot)
+              diffMainBitstamp: differenceMainBitstamp.toFixed(digitsAfterDot),
+              diffMainKraken: differenceMainKraken.toFixed(digitsAfterDot),
+              diffMainWhitebit: differenceMainWhitebit.toFixed(digitsAfterDot),
             })
           } catch (e) {
             console.log('not all data was loaded')
@@ -85,6 +98,7 @@ export class ReactService {
         }
         return TableRecords
   }
+
 
   groupRecords(records: priceRecord[]) {
     const recordsByGroup = new Map<string, priceRecord[]>();
@@ -150,10 +164,10 @@ export class ReactService {
   
     return sortedArray;
   }
-  async singleRecordTable(): Promise<calculatedRecord> {
+  async singleRecordTable(mainExchange: string): Promise<calculatedRecord> {
     const records: priceRecord[] = await this.db.loadLastRecord();
     const filteredRecords: calculatedRecord[] =
-      this.filterRecordsGraph(records, 1, 'EUR/USDT');
+      this.filterRecordsGraph(records, 1, 'EUR/USDT', mainExchange);
 
     // console.log(toExchange);
     return filteredRecords[0];
@@ -174,7 +188,7 @@ export class ReactService {
     );
 
     const filteredRecords: calculatedRecord[] =
-      this.filterRecordsGraph(records, stepNumber, 'EUR/USDT');
+      this.filterRecordsGraph(records, stepNumber, 'EUR/USDT', tableQuery.mainExchange);
     // console.log(filteredRecords.slice(0, 10));
 
     const [sortField, sortType] = tableQuery.sort.split(' ') as [
@@ -203,7 +217,7 @@ export class ReactService {
       graphQuery.step,
     );
     const calculatedRecords: calculatedRecord[] =
-      this.filterRecordsGraph(records, stepNumber, 'EUR/USDT');
+      this.filterRecordsGraph(records, stepNumber, 'EUR/USDT', graphQuery.mainExchange);
     return calculatedRecords;
   }
 }
